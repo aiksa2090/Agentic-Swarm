@@ -1,0 +1,5 @@
+accelerate
+bitsandbytes
+PySide6
+torch
+transformers

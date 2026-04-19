@@ -1,0 +1,61 @@
+# ==========================================
+#  Agentic Swarm — .gitignore
+# ==========================================
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# === Virtual Environment ===
+venv/
+env/
+.venv/
+ENV/
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# === OS Files ===
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.lnk
+
+# === Project Specific ===
+# SQLite database (contains user conversations — private)
+swarm_data.db
+*.db
+
+# Model offload directory (created automatically)
+offload_dir/
+
+# Crash logs (may contain system paths)
+CRASH_LOGS_DIAGNOSTICS.txt
+*.log
+
+# === Distribution / Packaging ===
+dist/
+build/
+*.egg-info/
+*.egg
+
+# === Byte-compiled / optimized ===
+*.pyc
+*.pyo
+*.pyd
+
+# === HuggingFace cache (models are too large for git) ===
+*.safetensors
+*.bin
+*.h5
+*.onnx
+*.pt
+*.pth
