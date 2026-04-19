@@ -1,0 +1,197 @@
+
+
+
+
+10. البرومبت الهندسي المتقدم لإعادة البناء
+IMPORTANT
+
+هذا البرومبت مصمم وفق أعلى معايير Prompt Engineering ليكون شاملاً ودقيقاً بما يكفي لنموذج ذكاء اصطناعي آخر لإعادة بناء المشروع بالكامل من الصفر.
+
+
+
+
+
+
+# MASTER PROMPT — بناء نظام Agentic Swarm كامل من الصفر
+
+## هويتك
+أنت مهندس برمجيات خبير متخصص في بناء تطبيقات سطح المكتب بـ Python وأنظمة الذكاء الاصطناعي المحلية. ستقوم ببناء مشروع كامل يُسمى "Agentic Swarm" (العقل الجماعي).
+
+## ملخص المشروع
+بناء تطبيق سطح مكتب أصلي (Native Desktop App) بلغة Python يُدير فريقاً من 5 وكلاء ذكاء اصطناعي يعملون تعاونياً في حلقة لا نهائية للعصف الذهني وتطوير الأفكار. كل وكيل يستخدم نموذج LLM محلي من عائلة Google Gemma-4. التطبيق يعمل بالكامل بدون إنترنت (Offline-First) على جهاز يملك RTX 4090 (16GB VRAM) و32GB RAM.
+
+## المتطلبات التقنية الصارمة
+
+### بنية المشروع (Architecture)
+أنشئ المشروع بالهيكل التالي بالضبط:
+
+
+
+```
+project/
+├── desktop_app.py          # نقطة الدخول الرئيسية
+├── run_project.ps1         # سكربت PowerShell للتشغيل التلقائي
+├── requirements.txt        # المكتبات: PySide6, transformers, torch, accelerate, bitsandbytes
+├── backend/
+│   ├── ai_engine.py        # محرك تحميل/توليد/تفريغ النماذج
+│   ├── orchestrator.py     # المنسق المركزي للوكلاء
+│   └── database.py         # SQLite للجلسات والرسائل والمسودات
+├── gui/
+│   ├── main_window.py      # النافذة الرئيسية (3 لوحات + Navbar)
+│   ├── customization_dialog.py  # نافذة تخصيص الوكلاء (يدوي + ذكي + قوالب)
+│   ├── diagnosis_dialog.py # عارض سجلات حي (Live Logs)
+│   ├── details_dialog.py   # عارض تفاصيل تقنية للنموذج
+│   ├── components.py       # AutoExpandingTextEdit المخصص
+│   ├── app_style.py        # QSS أنماط WhatsApp Dark
+│   ├── ai_worker.py        # QThread للعمل الخلفي
+│   └── models_data.py      # بيانات HTML للنماذج
+└── config/
+    ├── current_config.json  # إعدادات الوكلاء الحالية
+    ├── settings.json        # إعدادات عامة
+    └── templates.json       # قوالب محفوظة
+```
+
+
+
+### 1. desktop_app.py — نقطة الدخول
+- استخدم `ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID()` لتعريف هوية التطبيق على Windows.
+- استدعِ `init_db()` قبل أي شيء لتهيئة SQLite.
+- أنشئ `QApplication` مع خط `Segoe UI` بحجم 10.
+- أنشئ `MainWindow()` واعرضها.
+- استخدم `sys.exit(app.exec())` لبدء حلقة الأحداث.
+
+### 2. backend/ai_engine.py — المحرك الذكي
+- عرّف قائمة `AVAILABLE_MODELS` بأربعة نماذج Google Gemma-4:
+  - `google/gemma-4-e2b-it` (2.6B params, ~1.5GB 4-bit)
+  - `google/gemma-4-e4b-it` (4.4B params, ~3GB 4-bit)
+  - `google/gemma-4-26b-a4b-it` (26B MoE, ~13.3GB 4-bit)
+  - `google/gemma-4-31b-it` (31B Dense, ~16.4GB 4-bit)
+- عرّف مجموعة `LARGE_MODELS` للنماذج التي تحتاج `max_memory`.
+- دالة `get_local_model_path(repo_id)`: تحول اسم النموذج إلى مساره في كاش HuggingFace المحلي (`~/.cache/huggingface/hub/models--ORG--NAME/snapshots/HASH`).
+- دالة `generate_agent_response(agent_id, model_tag, agent_role, conversation_history, new_prompt, stream_callback)`:
+  - نظّف الذاكرة أولاً: `gc.collect()` + `torch.cuda.empty_cache()`.
+  - أعدّ `BitsAndBytesConfig` مع: `load_in_4bit=True`, `bnb_4bit_compute_dtype=torch.bfloat16`, `bnb_4bit_use_double_quant=True`, `bnb_4bit_quant_type="nf4"`.
+  - حمّل Tokenizer و Model محلياً (`local_files_only=True`) مع `device_map="auto"`.
+  - للنماذج الكبيرة: `max_memory = {0: "14.5GiB", "cpu": "16GiB"}` + `offload_folder="offload_dir"`.
+  - ابنِ المحادثة: system_instruction + conversation_history + new_prompt.
+  - استخدم `tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)`.
+  - أنشئ `TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)`.
+  - شغّل `model.generate()` في `Thread` منفصل مع: `max_new_tokens=400/600`, `do_sample=True`, `temperature=0.7`, `top_p=0.9`.
+  - ابث كل توكن عبر `stream_callback({"type": "stream", "agent_id": X, "token": T, "done": False/True})`.
+  - في `finally`: نفّذ التفريغ النووي: `accelerate.utils.release_memory(model)` → `del model, tokenizer, inputs` → `gc.collect()` → `torch.cuda.empty_cache()` → `torch.cuda.synchronize()`.
+- دالة `generate_ai_customization(user_prompt, agent_ids, model_tag)`: تولّد تخصيصات ذكية بصيغة `===AGENT_X===...===END===`.
+
+### 3. backend/orchestrator.py — المنسق
+- عرّف `DEFAULT_AGENTS_CONFIG`: قائمة بـ 5 قواميس (id, role, name, enabled, model_tag).
+- حمّل الإعدادات من `config/current_config.json` أو الافتراضي.
+- دالة `run_swarm_session(session_id, topic, stream_callback)`:
+  - حلقة `while` لا نهائية تتوقف فقط عند `stopped` أو `finished`.
+  - لكل وكيل مفعّل: فحص الإيقاف المؤقت → فحص التدخلات → اقتطاع السجل (آخر 10 رسائل) → تشغيل `generate_agent_response()` → حفظ في SQLite.
+  - الوكيل الأخير (#5) يحفظ ناتجه كمسودة.
+  - `time.sleep(2)` بين الدورات.
+- دوال CRUD: `get_agents_config()`, `update_agents_config()`, `reset_agents_config()`, `save_active_config()`.
+- نظام القوالب: `get_templates()`, `save_template()`, `delete_template()`.
+- نظام الإعدادات: `get_settings()`, `save_settings()`.
+- `active_sessions_control = {}` لحالة الجلسة (running/paused/stopped).
+- `active_sessions_interventions = {}` لأوامر المستخدم الحية.
+
+### 4. backend/database.py — SQLite
+- ثلاثة جداول: `sessions` (id, topic, status), `messages` (session_id, agent_id, role, content), `drafts` (session_id, content).
+- دوال: `init_db()`, `save_message()`, `create_session()`, `update_session_status()`, `update_draft()` (UPSERT), `get_draft()`, `get_all_messages()`.
+
+### 5. gui/main_window.py — النافذة الرئيسية
+- كلاس `AgentCard(QFrame)`: بطاقة لكل وكيل مع: عنوان، معرف النموذج التقني، حالة (thinking/idle)، زر ON/OFF، زر تفاصيل. إشارات: `details_requested(int, str)`, `toggle_requested(int, bool)`. دالة `update_card(data)` لـ Live Preview.
+- كلاس `MainWindow(QMainWindow)`:
+  - الواجهة: Navbar علوي + QSplitter ثلاثي (لوحة الوكلاء يمين 20% | دردشة وسط 55% | مسودة يسار 25%).
+  - شريط التنقل: أزرار (تشخيص، نماذج، تصدير، إعادة تشغيل، إيقاف كلي، إيقاف مؤقت، بدء، متابعة تلقائية).
+  - منطقة الإدخال: `AutoExpandingTextEdit` + زر إرسال.
+  - `make_selectable(widget)`: دالة عودية (Recursive) تجعل كل `QLabel` و `QTextBrowser` و `QTextEdit` قابلاً للتحديد.
+  - `show_customization_dialog()`: فتح نافذة التخصيص مع ربط `live_change` → `update_card_preview()`.
+  - `on_token_received(agent_id, token, done)`: إدراج التوكنات حرفاً حرفاً.
+  - `QTimer` كل 3000ms لتحديث المسودة.
+  - `closeEvent()`: إيقاف الخيط عند الإغلاق.
+
+### 6. gui/customization_dialog.py — نافذة التخصيص
+- شريط جانبي (280px): قوالب + تصدير/استيراد.
+- لوحة رئيسية: قسم تخصيص بالذكاء الاصطناعي (AutoExpandingTextEdit + QComboBox لاختيار نموذج التخصيص + زر تشغيل) + 5 مربعات تحرير (لكل وكيل: اسم + دور + نموذج + تفعيل).
+- إشارة `live_change(int, dict)`: كل تغيير في أي حقل يرسل إشارة فورية للنافذة الأم.
+- `apply_and_save()`: يجمع البيانات ← يحفظ في JSON ← يحدث الـ Orchestrator ← يغلق بقبول.
+- `run_ai_customization()`: يشغل `CustomizationWorker` ← يتلقى النتيجة ← يحللها بـ Regex ← يملأ الحقول.
+
+### 7. gui/components.py — AutoExpandingTextEdit
+- يرث من `QTextEdit`.
+- يتمدد تلقائياً (من `min_height` إلى `max_height`).
+- يخفي شريط التمرير حتى يتجاوز المحتوى الحد الأقصى.
+- يدعم Enter للإرسال (يبحث عن `on_send_clicked()` في النافذة الأم).
+
+### 8. gui/app_style.py — QSS
+- نمط WhatsApp Dark Mode.
+- ألوان: خلفية `#0b141a`, بطاقات `#111b21`, حدود `#202c33`, أخضر رئيسي `#00a884`, نص `#e9edef`.
+- أزرار دائرية ملونة: بدء أخضر، إيقاف أحمر، مؤقت أصفر، تشخيص وردي.
+- مربعات إدخال بحدود خضراء عند التركيز.
+- شريط تمرير رفيع أنيق (8px).
+
+### 9. gui/ai_worker.py — خيوط العمل
+- `SwarmWorker(QThread)`: يشغل `run_swarm_session()` في خيط منفصل. إشارات: `log_signal(str)`, `status_signal(int, str)`, `token_signal(int, str, bool)`, `info_signal(str)`. دوال تحكم: `pause_session()`, `resume_session()`, `stop_session()`.
+- `CustomizationWorker(QThread)`: يشغل `generate_ai_customization()`. إشارات: `finished(str)`, `error(str)`.
+
+### 10. gui/models_data.py — بيانات النماذج
+- قاموس `MODELS_INFO` يحتوي HTML غني لكل نموذج (المعرف، المعلمات، السياق، الحجم، الاستخدام الأمثل).
+
+### 11. gui/diagnosis_dialog.py — التشخيص
+- `LogSignal(QObject)`: جسر إشارات للسجلات.
+- `DiagnosisHandler(logging.Handler)`: يلتقط رسائل logging ويرسلها كإشارة.
+- `DiagnosisDialog(QDialog)`: عارض سجلات بلون أخضر على أسود (Matrix style) مع أزرار نسخ ومسح.
+
+### 12. gui/details_dialog.py — التفاصيل
+- `DetailsDialog(QDialog)`: نافذة بسيطة تعرض HTML في `QTextBrowser`. قابلة للتكبير والتصغير.
+
+## متطلبات التصميم
+- الواجهة بالكامل RTL (من اليمين لليسار) لدعم العربية.
+- خط `Segoe UI` الافتراضي.
+- كل النصوص قابلة للتحديد والنسخ بالماوس.
+- مربعات الإدخال قابلة للكتابة اليدوية الكاملة.
+- كل تغيير في نافذة التخصيص ينعكس فوراً (Live Sync) على البطاقات الرئيسية.
+- عرض المعرف التقني الكامل للنموذج (مثلاً `google/gemma-4-31b-it`) وليس اسماً ودياً.
+- عدم تجميد الواجهة أبداً أثناء العمل الثقيل.
+- بث التوكنات حرفاً حرفاً في الدردشة.
+
+## متطلبات حرجة
+- كل نموذج يُحمّل ← يُولّد ← يُفرّغ بالكامل من الذاكرة قبل النموذج التالي.
+- استخدام `local_files_only=True` دائماً لمنع أي اتصال بالإنترنت.
+- استخدام `BitsAndBytesConfig` مع NF4 + Double Quantization لكل نموذج.
+- النماذج الكبيرة (26B, 31B) تستخدم `max_memory` لتقسيم الأوزان بين GPU وCPU.
+- عند إغلاق التطبيق: إيقاف جميع الخيوط العاملة.
+- `finally` block إجباري لتفريغ الذاكرة حتى في حالة الخطأ.
+
+## اللغة
+- كل نصوص الواجهة باللغة العربية.
+- التعليقات في الكود بالعربية.
+- الأسماء التقنية (أسماء المتغيرات والدوال) بالإنجليزية.
+
+ابدأ بإنشاء كل الملفات بالترتيب: requirements.txt → database.py → ai_engine.py → orchestrator.py → components.py → app_style.py → models_data.py → details_dialog.py → diagnosis_dialog.py → ai_worker.py → customization_dialog.py → main_window.py → desktop_app.py → run_project.ps1.
+
+
+
+TIP
+
+نصيحة للاستخدام: انسخ البرومبت أعلاه (من # MASTER PROMPT حتى نهاية الكود) وألصقه كاملاً لنموذج الذكاء الاصطناعي الآخر. البرومبت مصمم ليكون مكتفياً ذاتياً (Self-Contained) — يحتوي كل المعلومات اللازمة لبناء المشروع من الصفر بدون أي مرجع خارجي.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,806 @@
+
+
+
+# 🚀 دليل التشغيل الكامل — Agentic Swarm
+# من الصفر المطلق حتى أول استجابة من الذكاء الاصطناعي
+
+> **هذا الدليل مكتوب لأي شخص — حتى لو لم يسبق له التعامل مع البرمجة أبداً.**
+> كل خطوة موضحة بالتفصيل مع صور ذهنية وأوامر جاهزة للنسخ واللصق.
+
+---
+
+## 📑 الفهرس
+
+| القسم | المحتوى |
+|-------|---------|
+| **المرحلة 0** | ما هو هذا البرنامج؟ وماذا يحتاج جهازي؟ |
+| **المرحلة 1** | تثبيت Python |
+| **المرحلة 2** | تثبيت تعريف كرت الشاشة NVIDIA |
+| **المرحلة 3** | تثبيت CUDA Toolkit |
+| **المرحلة 4** | تثبيت PyTorch مع دعم CUDA |
+| **المرحلة 5** | تحميل نماذج Gemma-4 من HuggingFace |
+| **المرحلة 6** | فك ضغط المشروع وتشغيله |
+| **المرحلة 7** | كيف تستخدم البرنامج بعد تشغيله |
+| **الملحق A** | حل المشاكل الشائعة |
+| **الملحق B** | البرومبت الهندسي للتشغيل التلقائي بالذكاء الاصطناعي |
+
+---
+
+# المرحلة 0 — ما هو هذا البرنامج؟ وماذا يحتاج جهازي؟
+
+## ما هو Agentic Swarm؟
+
+هو برنامج ذكاء اصطناعي يعمل **بالكامل على جهازك بدون إنترنت**. يحتوي على **5 خبراء افتراضيين** (وكلاء) يتناقشون مع بعضهم في حلقة لا نهائية لتطوير أفكارك.
+
+## ماذا يحتاج جهازي لتشغيله؟
+
+| المتطلب | الحد الأدنى | المثالي |
+|---------|-------------|---------|
+| **نظام التشغيل** | Windows 10 (64-bit) | Windows 11 |
+| **كرت شاشة NVIDIA** | RTX 3060 (12GB VRAM) | RTX 4070+ (12GB+ VRAM) |
+| **الذاكرة العشوائية (RAM)** | 16GB | 32GB+ |
+| **المعالج** | أي معالج حديث (i5/i7/i9 أو Ryzen 5/7/9) | — |
+| **مساحة القرص الفارغة** | 50GB | 100GB |
+| **إنترنت** | مطلوب فقط أثناء التثبيت لمرة واحدة | بعد التثبيت: لا يحتاج إنترنت أبداً |
+
+> ⚠️ **تنبيه مهم:** هذا البرنامج **لا يعمل** على أجهزة بدون كرت شاشة NVIDIA (لا يعمل على Intel HD Graphics أو AMD Radeon). يحتاج كرت NVIDIA مع ذاكرة 12GB على الأقل.
+
+---
+
+# المرحلة 1 — تثبيت Python
+
+## ما هو Python؟
+Python هي لغة البرمجة التي كُتب بها هذا البرنامج. جهازك يحتاج أن "يفهم" هذه اللغة ليُشغّل البرنامج.
+
+## خطوات التثبيت
+
+### الخطوة 1.1: تحميل Python
+
+1. افتح متصفح الإنترنت (Chrome/Edge/Firefox)
+2. اذهب إلى هذا الرابط:
+
+   ```
+   https://www.python.org/downloads/
+   ```
+
+3. سترى زراً كبيراً أصفر مكتوب عليه **"Download Python 3.13.x"** — اضغط عليه
+4. سيبدأ تحميل ملف باسم شبيه بـ `python-3.13.x-amd64.exe`
+
+   > ✏️ الرقم بعد 3.13 قد يختلف قليلاً (مثلاً 3.13.1 أو 3.13.2) — هذا طبيعي
+
+### الخطوة 1.2: تثبيت Python
+
+1. افتح الملف الذي حملته (انقر عليه مرتين)
+2. **⚠️ خطوة حرجة جداً — لا تنساها أبداً:**
+   
+   في أسفل نافذة التثبيت، سترى مربع اختيار (checkbox) مكتوب بجانبه:
+   ```
+   ☐ Add python.exe to PATH
+   ```
+   **يجب أن تضع علامة ✅ عليه!** اضغط عليه ليصبح:
+   ```
+   ☑ Add python.exe to PATH
+   ```
+
+   > 🔴 **إذا نسيت هذه الخطوة:** لن يعمل أي أمر Python لاحقاً وستضطر لإعادة التثبيت!
+
+3. بعد تفعيل الخيار، اضغط على **"Install Now"**
+4. انتظر حتى يكتمل التثبيت (دقيقة أو دقيقتين)
+5. عند ظهور **"Setup was successful"** اضغط **"Close"**
+
+### الخطوة 1.3: التحقق من نجاح التثبيت
+
+1. اضغط على لوحة المفاتيح: **مفتاح Windows + R**
+2. اكتب `cmd` ثم اضغط **Enter**
+3. ستُفتح "نافذة سوداء" (هي موجه الأوامر / Command Prompt)
+4. اكتب الأمر التالي ثم اضغط Enter:
+
+   ```
+   python --version
+   ```
+
+5. يجب أن يظهر شيء مثل:
+   ```
+   Python 3.13.13
+   ```
+
+   > ✅ إذا ظهر هذا الرقم = **نجح التثبيت!**
+   > ❌ إذا ظهر "is not recognized" = أعد التثبيت وتأكد من خيار PATH
+
+---
+
+# المرحلة 2 — تثبيت تعريف كرت الشاشة NVIDIA
+
+## لماذا هذه الخطوة؟
+كرت الشاشة NVIDIA هو "الدماغ" الذي سيُشغّل نماذج الذكاء الاصطناعي. التعريف (Driver) هو البرنامج الذي يجعل Windows يتحدث مع الكرت.
+
+## خطوات التثبيت
+
+### الخطوة 2.1: معرفة نوع كرت الشاشة
+
+1. اضغط بزر الماوس الأيمن على سطح المكتب (مكان فارغ)
+2. اختر **"NVIDIA Control Panel"** أو **"إعدادات العرض"**
+3. ستجد اسم الكرت مثل: `NVIDIA GeForce RTX 4090` أو `RTX 3060` أو `RTX 4070`
+
+   > إذا لم تجد NVIDIA = جهازك لا يحتوي كرت NVIDIA ولن يعمل البرنامج.
+
+### الخطوة 2.2: تحميل أحدث تعريف
+
+1. اذهب إلى:
+   ```
+   https://www.nvidia.com/Download/index.aspx?lang=ar
+   ```
+
+2. اختر نوع الكرت:
+   - **نوع المنتج:** GeForce
+   - **سلسلة المنتج:** GeForce RTX 40 Series (Laptops) — أو اختر ما يناسب كرتك
+   - **المنتج:** اسم كرتك بالضبط
+   - **نظام التشغيل:** Windows 11 64-bit (أو Windows 10)
+   - **نوع التحميل:** Game Ready Driver
+
+3. اضغط **"بحث"** ثم **"تحميل"**
+4. شغّل الملف المحمّل واتبع التعليمات (Next → Next → Install)
+5. **أعد تشغيل الكمبيوتر** بعد التثبيت
+
+### الخطوة 2.3: التحقق
+
+1. افتح **cmd** (كما في الخطوة 1.3)
+2. اكتب:
+   ```
+   nvidia-smi
+   ```
+3. يجب أن يظهر جدول يحتوي اسم الكرت وإصدار التعريف ورقم CUDA:
+   ```
+   NVIDIA GeForce RTX 4090 Laptop GPU | Driver: 566.07 | CUDA: 12.6
+   ```
+
+   > ✅ إذا ظهر الجدول = **تمام!**
+   > ❌ إذا ظهر خطأ = أعد تثبيت التعريف
+
+---
+
+# المرحلة 3 — تثبيت CUDA Toolkit
+
+## ما هو CUDA؟
+CUDA هي تقنية من NVIDIA تسمح للبرامج باستخدام قوة كرت الشاشة في الحسابات الرياضية المعقدة (مثل تشغيل نماذج الذكاء الاصطناعي). بدونها، النماذج ستعمل على المعالج فقط وستكون **بطيئة جداً جداً** (100x أبطأ).
+
+## خطوات التثبيت
+
+### الخطوة 3.1: تحميل CUDA Toolkit 12.6
+
+1. اذهب إلى:
+   ```
+   https://developer.nvidia.com/cuda-12-6-0-download-archive
+   ```
+
+2. اختر:
+   - **Operating System:** Windows
+   - **Architecture:** x86_64
+   - **Version:** 10 أو 11 (حسب نظامك)
+   - **Installer Type:** exe (local)
+
+3. اضغط **"Download"** — حجم الملف حوالي **3GB** فانتظر التحميل
+
+### الخطوة 3.2: تثبيت CUDA
+
+1. شغّل الملف المحمّل
+2. اختر **"Express (Recommended)"** — هذا يثبت كل شيء تلقائياً
+3. اضغط **Next** حتى يبدأ التثبيت
+4. انتظر (قد يستغرق 5-10 دقائق)
+5. اضغط **"Close"** عند الانتهاء
+
+### الخطوة 3.3: التحقق
+
+1. **أغلق** أي نوافذ cmd مفتوحة ثم افتح واحدة جديدة
+2. اكتب:
+   ```
+   nvcc --version
+   ```
+3. يجب أن يظهر:
+   ```
+   nvcc: NVIDIA (R) Cuda compiler driver
+   Cuda compilation tools, release 12.6, V12.6.xxx
+   ```
+
+   > ✅ إذا ظهر رقم 12.6 = **تمام!**
+
+---
+
+# المرحلة 4 — تثبيت PyTorch مع دعم CUDA
+
+## ما هو PyTorch؟
+PyTorch هو "المحرك" الذي يُشغّل نماذج الذكاء الاصطناعي فعلياً على كرت الشاشة. بدونه لا يمكن تحميل أو تشغيل أي نموذج.
+
+## خطوات التثبيت
+
+### الخطوة 4.1: تثبيت PyTorch
+
+1. افتح **cmd** (موجه الأوامر)
+2. انسخ والصق هذا الأمر الطويل **بالكامل** ثم اضغط Enter:
+
+   ```
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+   ```
+
+   > 📝 **شرح الأمر:**
+   > - `pip install` = أمر تثبيت مكتبات Python
+   > - `torch` = مكتبة PyTorch الأساسية
+   > - `torchvision` و `torchaudio` = إضافات للصور والصوت
+   > - `--index-url ...cu126` = نسخة خاصة تدعم CUDA 12.6
+
+3. **انتظر** — هذا التحميل كبير (**حوالي 2.5GB**). قد يستغرق 5-30 دقيقة حسب سرعة الإنترنت
+4. عند الانتهاء سترى:
+   ```
+   Successfully installed torch-X.X.X+cu126 ...
+   ```
+
+### الخطوة 4.2: التحقق من أن PyTorch يرى كرت الشاشة
+
+1. في نفس نافذة cmd، اكتب:
+   ```
+   python -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NONE')"
+   ```
+
+2. يجب أن يظهر:
+   ```
+   CUDA Available: True
+   GPU: NVIDIA GeForce RTX XXXX
+   ```
+
+   > ✅ إذا `True` + اسم الكرت = **ممتاز! PyTorch جاهز**
+   > ❌ إذا `False` = راجع تثبيت CUDA وتعريف NVIDIA
+
+---
+
+# المرحلة 5 — تحميل نماذج Gemma-4 من HuggingFace
+
+## ما هو HuggingFace؟
+HuggingFace هو موقع يستضيف نماذج الذكاء الاصطناعي المفتوحة المصدر. نماذج Gemma-4 من Google موجودة هناك.
+
+## ما هي نماذج Gemma-4؟
+هي 4 نماذج ذكاء اصطناعي من Google بأحجام مختلفة:
+
+| النموذج | الحجم التقريبي بعد التحميل | متطلبات GPU | ملاحظة |
+|---------|---------------------------|-------------|--------|
+| **gemma-4-e2b-it** | ~5 GB | 1.5 GB VRAM | الأسرع والأخف — ابدأ بهذا |
+| **gemma-4-e4b-it** | ~9 GB | 3 GB VRAM | متوسط |
+| **gemma-4-26b-a4b-it** | ~28 GB | 13 GB VRAM | كبير — يحتاج كرت قوي |
+| **gemma-4-31b-it** | ~35 GB | 16 GB VRAM | الأقوى — يحتاج RTX 4080/4090 |
+
+> 💡 **نصيحة للمبتدئين:** حمّل النموذج الأول فقط (`gemma-4-e2b-it`) للبدء. يمكنك تحميل البقية لاحقاً.
+
+## خطوات التحميل
+
+### الخطوة 5.1: إنشاء حساب HuggingFace (مجاني)
+
+1. اذهب إلى:
+   ```
+   https://huggingface.co/join
+   ```
+2. اكتب بريدك الإلكتروني وكلمة مرور واسم مستخدم
+3. اضغط **"Sign Up"**
+4. تحقق من بريدك الإلكتروني واضغط على رابط التأكيد
+
+### الخطوة 5.2: قبول ترخيص Gemma-4
+
+> ⚠️ **هذه الخطوة إجبارية!** نماذج Gemma-4 تحتاج موافقة على شروط الاستخدام.
+
+1. اذهب إلى **كل** من الروابط التالية (واحداً تلو الآخر):
+
+   ```
+   https://huggingface.co/google/gemma-4-e2b-it
+   ```
+   ```
+   https://huggingface.co/google/gemma-4-e4b-it
+   ```
+   ```
+   https://huggingface.co/google/gemma-4-26b-a4b-it
+   ```
+   ```
+   https://huggingface.co/google/gemma-4-31b-it
+   ```
+
+2. في كل صفحة، سترى رسالة تطلب **"Accept License"** أو **"Acknowledge License"**
+3. **اقرأ الشروط** ثم اضغط **"Accept"** أو **"Agree"**
+
+   > بعد القبول، الزر يتحول إلى "Access Granted" ✅
+
+### الخطوة 5.3: إنشاء مفتاح الوصول (Access Token)
+
+1. اذهب إلى:
+   ```
+   https://huggingface.co/settings/tokens
+   ```
+2. اضغط **"Create new token"**
+3. اختر:
+   - **اسم التوكن:** أي اسم (مثلاً `my-pc`)
+   - **الصلاحيات:** `Read` (قراءة فقط)
+4. اضغط **"Create Token"**
+5. **انسخ** الكود الطويل الذي يظهر (يبدأ بـ `hf_...`)
+
+   > 🔴 **احفظ هذا الكود!** لن يظهر مرة أخرى
+
+### الخطوة 5.4: تسجيل الدخول من جهازك
+
+1. افتح **cmd**
+2. ثبّت أداة HuggingFace:
+   ```
+   pip install huggingface_hub
+   ```
+3. سجّل الدخول:
+   ```
+   huggingface-cli login
+   ```
+4. سيسألك: `Enter your token:` → **الصق** الكود الذي نسخته (hf_...) ثم اضغط Enter
+
+   > ملاحظة: أثناء اللصق لن ترى أي شيء يُكتب (هذا طبيعي للأمان) — فقط الصق واضغط Enter
+
+5. إذا ظهر `Login successful` = **تمام!** ✅
+
+### الخطوة 5.5: تحميل النماذج
+
+> ⏱️ **التحميل يستغرق وقتاً طويلاً** حسب سرعة الإنترنت. كل نموذج عدة جيجابايت.
+
+1. افتح **cmd**
+2. **حمّل النموذج الأول** (الأصغر والأسرع — ابدأ بهذا):
+   ```
+   huggingface-cli download google/gemma-4-e2b-it
+   ```
+   > ⏱️ الحجم: ~5GB — الوقت التقريبي: 10-30 دقيقة
+
+3. **اختياري — حمّل النماذج الأخرى** (يمكنك تحميلها لاحقاً):
+   ```
+   huggingface-cli download google/gemma-4-e4b-it
+   ```
+   > ⏱️ الحجم: ~9GB
+
+   ```
+   huggingface-cli download google/gemma-4-26b-a4b-it
+   ```
+   > ⏱️ الحجم: ~28GB
+
+   ```
+   huggingface-cli download google/gemma-4-31b-it
+   ```
+   > ⏱️ الحجم: ~35GB
+
+4. **تحقق** من أن النماذج محفوظة:
+   ```
+   dir "%USERPROFILE%\.cache\huggingface\hub\models--google--*"
+   ```
+   يجب أن ترى المجلدات:
+   ```
+   models--google--gemma-4-e2b-it
+   models--google--gemma-4-e4b-it        (إذا حمّلته)
+   models--google--gemma-4-26b-a4b-it    (إذا حمّلته)
+   models--google--gemma-4-31b-it        (إذا حمّلته)
+   ```
+
+   > ✅ إذا ظهرت المجلدات = **النماذج جاهزة! بعد هذه النقطة لن تحتاج إنترنت أبداً**
+
+---
+
+# المرحلة 6 — فك ضغط المشروع وتشغيله
+
+## الخطوة 6.1: فك ضغط الملف
+
+1. خذ ملف المشروع المضغوط (`.zip` أو `.rar`) الذي وصلك
+2. **انقر بزر الماوس الأيمن** عليه
+3. اختر **"استخراج الكل..."** (Extract All) أو **"Extract Here"** إذا كنت تستخدم WinRAR أو 7-Zip
+4. اختر مكاناً تريد وضع المشروع فيه — مثلاً سطح المكتب
+
+   > بعد الاستخراج ستجد مجلداً باسم `n-go`
+
+### الخطوة 6.2: فتح PowerShell في مجلد المشروع
+
+> **ما هو PowerShell؟** هو نسخة متطورة من موجه الأوامر في Windows. البرنامج يحتاجه للتشغيل.
+
+**الطريقة السهلة:**
+
+1. افتح مجلد `n-go` في مستكشف الملفات (File Explorer)
+2. اضغط في **شريط العنوان** (Address Bar) في الأعلى — حيث يظهر المسار
+3. **امسح** المسار الموجود واكتب بدلاً منه:
+   ```
+   powershell
+   ```
+4. اضغط **Enter**
+5. ستفتح نافذة PowerShell زرقاء في مسار المشروع
+
+**الطريقة البديلة:**
+
+1. اضغط بزر الماوس الأيمن في **مكان فارغ** داخل مجلد `n-go`
+2. اختر **"فتح في Terminal"** أو **"Open in Terminal"**
+
+### الخطوة 6.3: السماح بتشغيل السكربتات
+
+في نافذة PowerShell، اكتب هذا الأمر واضغط Enter:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+إذا سألك `Do you want to change the execution policy?` اكتب `Y` واضغط Enter.
+
+> 📝 **ماذا يفعل هذا الأمر؟** Windows بشكل افتراضي يمنع تشغيل أي سكربت لأسباب أمنية. هذا الأمر يسمح بتشغيل السكربتات المحلية فقط (الموجودة على جهازك).
+
+### الخطوة 6.4: تشغيل البرنامج!
+
+في نفس نافذة PowerShell، اكتب:
+
+```powershell
+.\run_project.ps1
+```
+
+ثم اضغط **Enter**.
+
+**ماذا سيحدث الآن؟** السكربت سيقوم تلقائياً بالتالي (فقط اجلس وشاهد):
+
+```
+الخطوة التلقائية 1/6: تنظيف ملفات pip التالفة (إن وجدت)
+الخطوة التلقائية 2/6: إنشاء بيئة Python افتراضية (venv)
+الخطوة التلقائية 3/6: تفعيل البيئة
+الخطوة التلقائية 4/6: تثبيت جميع المكتبات المطلوبة ← هذه الخطوة قد تستغرق 2-5 دقائق
+الخطوة التلقائية 5/6: تنظيف أي عمليات قديمة
+الخطوة التلقائية 6/6: تشغيل البرنامج ← ستظهر نافذة البرنامج!
+```
+
+> 🎉 **عندما تظهر نافذة سوداء/خضراء بتصميم يشبه WhatsApp = البرنامج يعمل!**
+
+### الخطوة 6.5: التشغيلات اللاحقة (كل مرة تريد تشغيل البرنامج)
+
+في كل مرة تريد تشغيل البرنامج لاحقاً:
+
+1. افتح مجلد `n-go`
+2. افتح PowerShell فيه (كما في الخطوة 6.2)
+3. اكتب:
+   ```powershell
+   .\run_project.ps1
+   ```
+
+---
+
+# المرحلة 7 — كيف تستخدم البرنامج بعد تشغيله
+
+## واجهة البرنامج
+
+عند فتح البرنامج سترى 3 مناطق رئيسية:
+
+```
+┌──────────────────────────────────────────────────────┐
+│    شريط الأزرار العلوي                               │
+│  🛡️التشخيص  📁النماذج  📥تصدير  🔄جديد  🛑إيقاف  🚀بدء │
+├──────────┬─────────────────────────┬─────────────────┤
+│          │                         │                 │
+│  اللوحة  │     مجلس الاستشاريين    │  المسودة        │
+│  اليمنى  │     (الدردشة الرئيسية)   │  الحية          │
+│          │                         │                 │
+│ بطاقات   │                         │ هنا تظهر        │
+│ الوكلاء  │  هنا يتحدث الوكلاء      │ المسودة النهائية │
+│ الخمسة   │  مع بعضهم               │ التي يكتبونها   │
+│          │                         │                 │
+│ 🎛️تخصيص │  ┌──────────────────┐   │                 │
+│          │  │ اكتب فكرتك هنا ➔│   │                 │
+│          │  └──────────────────┘   │                 │
+└──────────┴─────────────────────────┴─────────────────┘
+```
+
+## كيف أبدأ جلسة عصف ذهني؟
+
+1. اكتب فكرتك في **مربع الكتابة** في الأسفل
+   - مثلاً: `صمم لي تطبيق توصيل طعام بالدرونز`
+2. اضغط **Enter** أو زر الإرسال (**➔**)
+3. **شاهد** الوكلاء يبدأون العمل واحداً تلو الآخر:
+   - الوكيل #1 يفكر... يكتب الاستجابة حرفاً حرفاً
+   - ثم الوكيل #2 يقرأ ما كتبه #1 ويحسنه
+   - ثم #3... ثم #4... ثم #5
+   - ثم يعودون من #1 في دورة جديدة... إلى ما لا نهاية!
+
+## كيف أوقف الوكلاء؟
+
+- **🛑 إيقاف:** يوقف كل شيء نهائياً
+- **⏸ إيقاف مؤقت:** يوقفهم مؤقتاً (يمكنك استئنافهم)
+- **▶ استئناف:** يكمل من حيث توقف
+
+## كيف أخصص الوكلاء؟
+
+1. اضغط على **🎛️ تخصيص النماذج والوكلاء** في اللوحة اليمنى
+2. ستفتح نافذة كبيرة فيها:
+   - **5 مربعات** — لكل وكيل مربع يحتوي: اسمه، دوره، النموذج المستخدم
+   - يمكنك تغيير أي شيء يدوياً
+   - أو أكتب وصفاً في مربع "التخصيص بالذكاء الاصطناعي" واضغط **"بدء تخصيص الكل"**
+3. اضغط **✅ تطبيق التخصيص وحفظه** لحفظ التغييرات
+
+## كيف أتدخل أثناء عمل الوكلاء?
+
+أثناء عمل الوكلاء (بعد بدء الجلسة)، اكتب رسالة جديدة في مربع الإدخال → ستُحقن كـ "أمر إداري" يُوجّه الوكلاء.
+
+---
+
+# الملحق A — حل المشاكل الشائعة
+
+## المشكلة 1: `python is not recognized`
+
+**السبب:** لم تُفعّل خيار "Add to PATH" أثناء تثبيت Python.
+**الحل:** أعد تثبيت Python وتأكد من تفعيل الخيار.
+
+## المشكلة 2: `nvidia-smi` لا يعمل
+
+**السبب:** تعريف NVIDIA غير مثبت.
+**الحل:** ثبّت أحدث تعريف من موقع NVIDIA (المرحلة 2).
+
+## المشكلة 3: `torch.cuda.is_available()` يُرجع `False`
+
+**الأسباب المحتملة:**
+1. CUDA غير مثبت → ثبّت CUDA Toolkit (المرحلة 3)
+2. إصدار PyTorch خاطئ (بدون cu126) → أعد تثبيت PyTorch (المرحلة 4)
+3. أعد تشغيل الكمبيوتر بعد تثبيت CUDA
+
+## المشكلة 4: `ModuleNotFoundError: No module named 'PySide6'`
+
+**السبب:** المكتبات لم تُثبّت.
+**الحل:** شغّل `run_project.ps1` مرة أخرى — هو يثبت المكتبات تلقائياً.
+
+## المشكلة 5: `OSError: ... is not a local folder and is not a valid model identifier`
+
+**السبب:** النموذج غير محمّل أو لم تسجل دخول HuggingFace.
+**الحل:** تأكد من تنفيذ المرحلة 5 بالكامل.
+
+## المشكلة 6: `CUDA out of memory`
+
+**السبب:** النموذج المختار أكبر من ذاكرة كرت الشاشة.
+**الحل:** في نافذة التخصيص، غيّر النموذج المعيّن لكل وكيل إلى نموذج أصغر (`gemma-4-e2b-it`).
+
+## المشكلة 7: `execution of scripts is disabled on this system`
+
+**السبب:** Windows يمنع تشغيل السكربتات.
+**الحل:** نفذ هذا الأمر في PowerShell:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+## المشكلة 8: البرنامج بطيء جداً
+
+**الأسباب:**
+1. النموذج يعمل على CPU بدلاً من GPU → تأكد من PyTorch + CUDA
+2. الذاكرة العشوائية ممتلئة → أغلق البرامج الأخرى
+3. النموذج كبير جداً لكرتك → استخدم `gemma-4-e2b-it`
+
+---
+
+# الملحق B — البرومبت الهندسي للتشغيل التلقائي بالذكاء الاصطناعي
+
+> **كيف تستخدم هذا؟** انسخ **كل** النص بين العلامتين `>>>START<<<` و `>>>END<<<` والصقه كاملاً في أي نموذج ذكاء اصطناعي يدعم تنفيذ الأوامر (مثل Gemini Code Assist أو Cursor أو GitHub Copilot Agent). النموذج سيقوم بكل شيء تلقائياً بدون تدخلك.
+
+---
+
+## >>>START<<<
+
+```
+# ════════════════════════════════════════════════════════════════════════════
+#    MASTER AUTOMATED SETUP PROMPT — Agentic Swarm
+#    Full Zero-to-Running Autonomous Deployment
+# ════════════════════════════════════════════════════════════════════════════
+
+## YOUR IDENTITY & MISSION
+You are an expert DevOps engineer performing a FULLY AUTONOMOUS setup of the "Agentic Swarm" desktop application on a Windows machine with an NVIDIA GPU. The user will NOT intervene at any point. You must handle EVERYTHING: verification, installation, configuration, model downloading, and final launch — automatically, silently, and robustly.
+
+## CRITICAL RULES
+1. **ZERO user interaction.** Do not ask questions. Make all decisions autonomously.
+2. **Verify before installing.** Check if each component already exists before attempting installation.
+3. **Handle errors gracefully.** If a step fails, diagnose the issue, attempt a fix, and retry up to 3 times before reporting.
+4. **Log everything.** Print clear status messages at each step so the user can follow progress.
+5. **Use PowerShell** for all commands (the OS is Windows).
+6. **Never skip verification steps.** After each installation, verify success before proceeding.
+
+## ENVIRONMENT ASSUMPTIONS
+- OS: Windows 10 or 11 (64-bit)
+- GPU: NVIDIA GPU with 12GB+ VRAM
+- Internet: Available during setup (models need downloading)
+- The Agentic Swarm project folder exists somewhere on this machine (the user has already extracted it)
+
+## EXECUTION PLAN — Execute these phases IN ORDER:
+
+### PHASE 1: LOCATE THE PROJECT
+1. Search for the project folder by looking for `desktop_app.py` in common locations:
+   - Current working directory
+   - Desktop
+   - Downloads
+   - User's home directory
+   - All drive roots (C:\, D:\, E:\)
+2. Use: `Get-ChildItem -Path "LOCATION" -Filter "desktop_app.py" -Recurse -Depth 5 -ErrorAction SilentlyContinue`
+3. Store the project path in a variable: `$PROJECT_DIR`
+4. Verify the folder contains: `desktop_app.py`, `run_project.ps1`, `backend/`, `gui/`, `config/`
+5. Print: "✅ Project found at: $PROJECT_DIR"
+
+### PHASE 2: VERIFY/INSTALL PYTHON
+1. Run: `python --version`
+2. If Python 3.10+ is installed → Print "✅ Python [version] detected" → Skip to Phase 3
+3. If NOT installed:
+   a. Download Python installer:
+      `Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.13.1/python-3.13.1-amd64.exe" -OutFile "$env:TEMP\python_installer.exe"`
+   b. Install silently with PATH enabled:
+      `Start-Process -FilePath "$env:TEMP\python_installer.exe" -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0" -Wait`
+   c. Refresh PATH: `$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")`
+   d. Verify: `python --version`
+   e. If still fails → STOP and report error
+
+### PHASE 3: VERIFY/INSTALL NVIDIA DRIVER
+1. Run: `nvidia-smi`
+2. If it works → Extract GPU name and VRAM → Print "✅ GPU: [name], VRAM: [size], Driver: [version]" → Skip to Phase 4
+3. If NOT installed:
+   a. Print "❌ NVIDIA driver not found. Please install it manually from https://www.nvidia.com/Download/index.aspx"
+   b. Print "After installing, restart your computer and run this prompt again."
+   c. STOP (driver installation requires manual intervention and a reboot)
+
+### PHASE 4: VERIFY/INSTALL CUDA TOOLKIT
+1. Run: `nvcc --version`
+2. If CUDA 12.x is installed → Print "✅ CUDA [version] detected" → Skip to Phase 5
+3. If NOT installed:
+   a. Download CUDA 12.6:
+      `Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.6.0/local_installers/cuda_12.6.0_560.76_windows.exe" -OutFile "$env:TEMP\cuda_installer.exe"`
+   b. Install silently:
+      `Start-Process -FilePath "$env:TEMP\cuda_installer.exe" -ArgumentList "-s" -Wait`
+   c. Refresh PATH
+   d. Verify: `nvcc --version`
+
+### PHASE 5: VERIFY/INSTALL PYTORCH WITH CUDA
+1. Run: `python -c "import torch; print(torch.cuda.is_available())"`
+2. If prints `True` → Print "✅ PyTorch with CUDA is ready" → Skip to Phase 6
+3. If `False` or import error:
+   a. Install PyTorch:
+      `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`
+   b. Verify again: `python -c "import torch; print('CUDA:', torch.cuda.is_available(), '| GPU:', torch.cuda.get_device_name(0))"`
+   c. If still False → Try: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124` (fallback to CUDA 12.4)
+
+### PHASE 6: INSTALL PROJECT DEPENDENCIES
+1. Navigate to `$PROJECT_DIR`
+2. Install core dependencies:
+   `pip install PySide6 transformers accelerate bitsandbytes huggingface_hub --quiet`
+3. If `requirements.txt` exists:
+   `pip install -r requirements.txt --quiet`
+4. Verify critical imports:
+   `python -c "from PySide6.QtWidgets import QApplication; from transformers import AutoModelForCausalLM; print('✅ All dependencies OK')"`
+
+### PHASE 7: DOWNLOAD GEMMA-4 MODELS
+1. Check if user is logged into HuggingFace:
+   `python -c "from huggingface_hub import HfApi; api = HfApi(); print(api.whoami()['name'])"`
+2. If NOT logged in:
+   a. Print "⚠️ You need to log into HuggingFace first."
+   b. Run: `huggingface-cli login`
+   c. NOTE: This is the ONE step that may need user input (pasting their token).
+
+3. Check which models are already downloaded:
+   ```python
+   import os
+   models = [
+       "google/gemma-4-e2b-it",
+       "google/gemma-4-e4b-it",
+       "google/gemma-4-26b-a4b-it",
+       "google/gemma-4-31b-it"
+   ]
+   cache = os.path.expanduser("~/.cache/huggingface/hub")
+   for m in models:
+       folder = "models--" + m.replace("/", "--")
+       path = os.path.join(cache, folder, "snapshots")
+       if os.path.exists(path) and os.listdir(path):
+           print(f"✅ {m} — Already downloaded")
+       else:
+           print(f"⬇️ {m} — Needs download")
+   ```
+
+4. Download missing models (start with the smallest):
+   For each missing model:
+   ```
+   huggingface-cli download MODEL_NAME
+   ```
+   Start with `google/gemma-4-e2b-it` FIRST — this ensures the app can run immediately.
+   Then download remaining models in order of size.
+
+5. After ALL downloads complete, verify:
+   ```
+   dir "%USERPROFILE%\.cache\huggingface\hub\models--google--*"
+   ```
+
+### PHASE 8: CONFIGURE AND LAUNCH
+1. Navigate to `$PROJECT_DIR`
+2. Set execution policy:
+   `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force`
+3. Set offline mode environment variables:
+   `$env:HF_HUB_OFFLINE = "1"`
+   `$env:TRANSFORMERS_OFFLINE = "1"`
+4. Create virtual environment (if not exists):
+   `python -m venv venv --system-site-packages`
+5. Activate it:
+   `. .\venv\Scripts\Activate.ps1`
+6. Install dependencies inside venv:
+   `pip install PySide6 transformers accelerate bitsandbytes --quiet`
+7. Launch the application:
+   `python desktop_app.py`
+8. Print: "🎉 Agentic Swarm is now running!"
+
+### PHASE 9: POST-LAUNCH VERIFICATION
+1. Wait 5 seconds after launch
+2. Check if the process is running:
+   `Get-Process python -ErrorAction SilentlyContinue`
+3. If running → Print "✅ Application is running successfully!"
+4. If NOT running → Check the last error output and diagnose
+
+## ERROR HANDLING MATRIX
+
+| Error | Diagnosis | Auto-Fix |
+|-------|-----------|----------|
+| `python not found` | Python not installed or not in PATH | Install Python silently |
+| `nvidia-smi fails` | No NVIDIA driver | Instruct manual install + reboot |
+| `torch.cuda.is_available() = False` | Wrong PyTorch version | Reinstall with correct CUDA version |
+| `ModuleNotFoundError` | Missing pip package | `pip install [package]` |
+| `OSError: model not found` | Model not downloaded | `huggingface-cli download [model]` |
+| `CUDA out of memory` | Model too large for GPU | Switch to gemma-4-e2b-it in config |
+| `execution policy error` | PowerShell blocks scripts | Set RemoteSigned policy |
+
+## FINAL OUTPUT FORMAT
+After completing ALL phases, print this summary:
+
+```
+══════════════════════════════════════════════════
+  🎉 AGENTIC SWARM — SETUP COMPLETE
+══════════════════════════════════════════════════
+  ✅ Python:    [version]
+  ✅ CUDA:      [version]
+  ✅ PyTorch:   [version] + CUDA [cuda_version]
+  ✅ GPU:       [gpu_name] ([vram]GB VRAM)
+  ✅ Models:    [list of downloaded models]
+  ✅ Project:   [project_path]
+  ✅ Status:    RUNNING
+══════════════════════════════════════════════════
+  
+  To run again later:
+  1. Open PowerShell in [project_path]
+  2. Run: .\run_project.ps1
+══════════════════════════════════════════════════
+```
+
+NOW BEGIN EXECUTION. Start with Phase 1.
+```
+
+## >>>END<<<
+
+---
+
+> [!TIP]
+> **ملاحظة:** الخطوة الوحيدة التي قد تحتاج تدخلك عند استخدام البرومبت هي **لصق توكن HuggingFace** (المرحلة 7، الخطوة 2). كل شيء آخر يتم تلقائياً بالكامل.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

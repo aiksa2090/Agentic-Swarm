@@ -1,0 +1,910 @@
+
+
+# 🧠 الوثيقة الشاملة لمشروع Agentic Swarm — من الألف إلى الياء
+
+> **هدف هذه الوثيقة:** شرح كامل وعميق لكل ذرة في المشروع — الفلسفة، الهندسة المعمارية، كل ملف، كل مكتبة، كل قرار تصميمي — ثم تقديم برومبت Prompt Engineering احترافي يمكن لنموذج ذكاء اصطناعي آخر استخدامه لإعادة بناء المشروع بالكامل من الصفر.
+
+---
+
+## 📑 الفهرس
+
+1. [نظرة عامة على المشروع](#1-نظرة-عامة-على-المشروع)
+2. [الفلسفة والمفاهيم العلمية الأساسية](#2-الفلسفة-والمفاهيم-العلمية-الأساسية)
+3. [الهندسة المعمارية الكاملة](#3-الهندسة-المعمارية-الكاملة)
+4. [شجرة الملفات وشرح كل ملف بالتفصيل](#4-شجرة-الملفات-وشرح-كل-ملف-بالتفصيل)
+5. [التقنيات والمكتبات المستخدمة بالتفصيل](#5-التقنيات-والمكتبات-المستخدمة-بالتفصيل)
+6. [آلية العمل الداخلية خطوة بخطوة](#6-آلية-العمل-الداخلية-خطوة-بخطوة)
+7. [نظام الذاكرة وإدارة VRAM](#7-نظام-الذاكرة-وإدارة-vram)
+8. [نظام الواجهة الرسومية](#8-نظام-الواجهة-الرسومية)
+9. [نظام التخصيص والتحكم](#9-نظام-التخصيص-والتحكم)
+10. [البرومبت الهندسي المتقدم لإعادة البناء](#10-البرومبت-الهندسي-المتقدم-لإعادة-البناء)
+
+---
+
+## 1. نظرة عامة على المشروع
+
+### ما هو مشروع Agentic Swarm؟
+
+**Agentic Swarm** (العقل الجماعي للوكلاء الأذكياء) هو تطبيق سطح مكتب أصلي (Native Desktop Application) مبني بلغة Python، يُدير **فريقاً من 5 وكلاء ذكاء اصطناعي** يعملون بشكل تعاوني ومتسلسل في **حلقة لا نهائية** (Infinite Loop) للعصف الذهني وتطوير الأفكار.
+
+### الفكرة الجوهرية
+
+بدلاً من استخدام نموذج ذكاء اصطناعي واحد لحل مشكلة، يقوم هذا النظام بتوزيع المهمة على **5 خبراء متخصصين** (مثل: مهندس معماري، مبرمج، خبير أمن، مهندس جودة، كاتب تقني). كل خبير:
+1. يقرأ ما كتبه الخبير السابق.
+2. ينتقده ويحسنه من منظور تخصصه.
+3. يمرر النتيجة للخبير التالي.
+4. وهكذا في دورات لا نهائية حتى يوقفها المستخدم.
+
+### البيئة المستهدفة
+
+| البند | القيمة |
+|-------|--------|
+| **نظام التشغيل** | Windows 10/11 (64-bit) |
+| **المعالج المركزي (CPU)** | Intel Core i9-13980HX |
+| **كرت الشاشة (GPU)** | NVIDIA GeForce RTX 4090 Laptop (16GB VRAM) |
+| **الذاكرة العشوائية (RAM)** | 32GB DDR5 |
+| **وضع التشغيل** | **Offline-First** — لا يحتاج إنترنت أبداً بعد تحميل النماذج |
+
+---
+
+## 2. الفلسفة والمفاهيم العلمية الأساسية
+
+### 2.1 نظام الوكلاء المتعددين — Multi-Agent System (MAS)
+
+| المصطلح العلمي | الشرح |
+|----------------|-------|
+| **Multi-Agent System (MAS)** | نظام حوسبي يتكون من عدة وكلاء (Agents) ذاتيين يتفاعلون مع بعضهم لتحقيق هدف مشترك. كل وكيل له "شخصية" و"تخصص" مختلف. |
+| **Swarm Intelligence** | ذكاء السرب — مستوحى من سلوك النمل والنحل، حيث التعاون بين كيانات بسيطة يُنتج سلوكاً ذكياً معقداً. |
+| **Chain-of-Thought (CoT)** | سلسلة التفكير — كل وكيل يبني على تفكير الوكيل السابق، مما يزيد عمق التحليل مع كل دورة. |
+| **Orchestrator Pattern** | نمط المنسق — كيان مركزي (Orchestrator) يدير ترتيب تنفيذ الوكلاء ويتحكم بتدفق البيانات بينهم. |
+| **Human-in-the-Loop (HITL)** | الإنسان في الحلقة — المستخدم يستطيع التدخل في أي لحظة وتوجيه الوكلاء أثناء عملهم عبر "أمر إداري" يُحقن في السياق. |
+
+### 2.2 الضغط الرقمي — Quantization
+
+| المفهوم | الشرح |
+|---------|-------|
+| **4-bit Quantization** | تقنية لتقليل حجم النموذج في الذاكرة بنسبة ~75% عبر تمثيل الأوزان بـ 4 بتات بدلاً من 16 أو 32 بت. |
+| **NF4 (NormalFloat 4-bit)** | صيغة ضغط متقدمة من QLoRA تحافظ على أقصى جودة ممكنة مع أقل ذاكرة. |
+| **Double Quantization** | ضغط مزدوج — حتى الثوابت المستخدمة في عملية الضغط نفسها يتم ضغطها، مما يوفر ~0.4GB إضافية لكل نموذج. |
+| **bfloat16 Compute** | استخدام تنسيق الفاصلة العائمة bfloat16 للحساب أثناء التوليد، مما يوازن بين السرعة والدقة. |
+
+### 2.3 المبادلة الديناميكية للذاكرة — Dynamic VRAM Swapping
+
+هذا هو القلب الهندسي للمشروع. بما أن الـ GPU تملك 16GB فقط، وبعض النماذج تحتاج أكثر من ذلك، فإن النظام يتبع فلسفة **"حمّل، ولّد، فرّغ"**:
+
+```
+╔══════════════════════════════════════════════════╗
+║   الوكيل #1 يعمل الآن                          ║
+║   1. تحميل النموذج → GPU (16GB)                 ║
+║   2. توليد الاستجابة (Streaming)                 ║
+║   3. تفريغ النموذج بالكامل من GPU               ║
+║   4. gc.collect() + torch.cuda.empty_cache()     ║
+║   5. → الذاكرة فارغة 100% للوكيل التالي         ║
+╚══════════════════════════════════════════════════╝
+```
+
+### 2.4 نمط Signals & Slots — التواصل الآمن بين الخيوط
+
+| المفهوم | الشرح |
+|---------|-------|
+| **Signal** | إشارة ترسلها عنصر واجهة أو خيط عمل عندما يحدث شيء ما (مثلاً: "وصل توكن جديد"). |
+| **Slot** | دالة تستقبل الإشارة وتنفذ إجراءً (مثلاً: "اعرض التوكن على الشاشة"). |
+| **Thread Safety** | الواجهة الرسومية في PySide6 تعمل فقط في الخيط الرئيسي (Main Thread). أي تعديل للواجهة من خيط آخر يسبب انهياراً. لذلك نستخدم Signals/Slots كجسر آمن. |
+
+---
+
+## 3. الهندسة المعمارية الكاملة
+
+### 3.1 مخطط الطبقات (Layered Architecture)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    🖥️ طبقة التقديم (Presentation Layer)     │
+│    main_window.py → customization_dialog.py → components.py │
+│    app_style.py → details_dialog.py → diagnosis_dialog.py   │
+│    models_data.py                                           │
+├─────────────────────────────────────────────────────────────┤
+│                    🔄 طبقة التنسيق (Orchestration Layer)    │
+│    ai_worker.py → orchestrator.py                           │
+├─────────────────────────────────────────────────────────────┤
+│                    🧠 طبقة الذكاء (AI Engine Layer)         │
+│    ai_engine.py                                             │
+├─────────────────────────────────────────────────────────────┤
+│                    💾 طبقة البيانات (Data Layer)             │
+│    database.py → swarm_data.db (SQLite)                     │
+│    config/ → current_config.json, settings.json,            │
+│              templates.json                                 │
+├─────────────────────────────────────────────────────────────┤
+│                    ⚙️ طبقة البنية التحتية (Infrastructure)  │
+│    desktop_app.py → run_project.ps1 → fix_os_1455.ps1       │
+│    venv/ → requirements.txt                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 مخطط التدفق (Data Flow)
+
+```
+المستخدم يكتب فكرة
+        │
+        ▼
+   MainWindow.on_send_clicked()
+        │
+        ▼
+   SwarmWorker (QThread) ─── خيط منفصل لا يجمّد الواجهة
+        │
+        ▼
+   orchestrator.run_swarm_session()
+        │
+        ├──→ الوكيل #1: تحميل النموذج → توليد → تفريغ
+        ├──→ الوكيل #2: تحميل النموذج → توليد → تفريغ
+        ├──→ الوكيل #3: تحميل النموذج → توليد → تفريغ
+        ├──→ الوكيل #4: تحميل النموذج → توليد → تفريغ
+        └──→ الوكيل #5: تحميل النموذج → توليد → تفريغ → حفظ المسودة
+                │
+                ▼
+        العودة للوكيل #1 (دورة جديدة) ... إلى ما لا نهاية
+```
+
+---
+
+## 4. شجرة الملفات وشرح كل ملف بالتفصيل
+
+### هيكل المشروع الكامل
+
+```
+n-go/
+├── 📄 desktop_app.py          ← نقطة الدخول الرئيسية
+├── 📄 run_project.ps1         ← سكربت التشغيل التلقائي
+├── 📄 fix_os_1455.ps1         ← إصلاح خطأ الذاكرة الافتراضية
+├── 📄 requirements.txt        ← المكتبات المطلوبة
+├── 📁 backend/
+│   ├── 📄 ai_engine.py        ← محرك الذكاء الاصطناعي
+│   ├── 📄 orchestrator.py     ← المنسق المركزي
+│   └── 📄 database.py         ← قاعدة البيانات
+├── 📁 gui/
+│   ├── 📄 main_window.py      ← النافذة الرئيسية
+│   ├── 📄 customization_dialog.py  ← نافذة تخصيص الوكلاء
+│   ├── 📄 diagnosis_dialog.py ← نافذة التشخيص والسجلات
+│   ├── 📄 details_dialog.py   ← نافذة تفاصيل النموذج
+│   ├── 📄 components.py       ← مكونات واجهة مخصصة
+│   ├── 📄 app_style.py        ← أنماط التصميم (QSS)
+│   ├── 📄 ai_worker.py        ← خيوط العمل الخلفية
+│   └── 📄 models_data.py      ← بيانات النماذج التقنية
+├── 📁 config/
+│   ├── 📄 current_config.json ← إعدادات الوكلاء الحالية
+│   ├── 📄 settings.json       ← الإعدادات العامة
+│   └── 📄 templates.json      ← قوالب التخصيص المحفوظة
+├── 📁 offload_dir/            ← مجلد تفريغ أوزان CPU
+├── 📁 venv/                   ← البيئة الافتراضية
+└── 📄 swarm_data.db           ← قاعدة بيانات SQLite
+```
+
+---
+
+### 4.1 📄 `desktop_app.py` — نقطة الدخول (Entry Point)
+
+**الوظيفة:** هذا هو أول ملف يتم تنفيذه عند تشغيل البرنامج. وظيفته هي:
+
+1. **تهيئة هوية التطبيق على Windows:** استخدام `ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID()` لإعطاء البرنامج هوية فريدة في شريط المهام (Taskbar) بدلاً من أيقونة Python الافتراضية. هذا يتيح للتطبيق أن يظهر كبرنامج مستقل حقيقي.
+
+2. **تهيئة قاعدة البيانات:** استدعاء `init_db()` لإنشاء جداول SQLite إذا لم تكن موجودة.
+
+3. **بناء حلقة الأحداث (Event Loop):** إنشاء كائن `QApplication` الذي يدير كل أحداث الواجهة (نقرات الماوس، ضغطات لوحة المفاتيح، إعادة الرسم).
+
+4. **ضبط الخط العربي:** تعيين خط `Segoe UI` بحجم 10 نقاط كافتراضي لدعم العرض العربي السلس.
+
+5. **عرض النافذة الرئيسية:** إنشاء `MainWindow()` وإظهارها.
+
+6. **بدء حلقة التنفيذ:** `app.exec()` تبدأ الحلقة اللانهائية التي تستمع للأحداث. لن يخرج البرنامج حتى يُغلق المستخدم النافذة.
+
+**لماذا `sys.exit(app.exec())`؟** لأن `app.exec()` تُرجع كود خروج (exit code)، و`sys.exit()` يضمن أن Python تُنهي كل الخيوط والعمليات بشكل نظيف.
+
+---
+
+### 4.2 📄 `run_project.ps1` — سكربت التشغيل التلقائي
+
+**الوظيفة:** سكربت PowerShell يقوم بكل خطوات التحضير تلقائياً:
+
+| الخطوة | ماذا يفعل | لماذا |
+|--------|-----------|-------|
+| 1 | حذف مجلدات `~ympy*` الفاسدة | مجلدات pip تالفة تمنع التثبيت |
+| 2 | إنشاء `venv` مع `--system-site-packages` | لوراثة PyTorch/CUDA المثبت عالمياً دون إعادة تحميل ~12GB |
+| 3 | تفعيل البيئة الافتراضية | لعزل المكتبات |
+| 4 | تثبيت المكتبات عبر pip | تثبيت كل الاعتماديات |
+| 5 | تنظيف المنفذ 8123 | قتل أي عملية قديمة عالقة |
+| 6 | تشغيل `desktop_app.py` | بدء التطبيق |
+
+**ملاحظة تقنية:** الخيار `--system-site-packages` حيوي لأن PyTorch مع دعم CUDA/cuDNN مثبت عالمياً على الجهاز ولا نريد إعادة تحميله (حجمه ضخم).
+
+---
+
+### 4.3 📄 `backend/ai_engine.py` — محرك الذكاء الاصطناعي (AI Engine)
+
+**هذا هو الملف الأكثر تعقيداً في المشروع.** وظيفته هي تحميل نماذج الذكاء الاصطناعي المحلية، توليد الاستجابات، وتفريغ الذاكرة.
+
+#### المتغيرات العالمية
+
+| المتغير | القيمة | الشرح |
+|---------|--------|-------|
+| `AVAILABLE_MODELS` | قائمة بأسماء 4 نماذج | النماذج المتاحة للاختيار في الواجهة |
+| `LARGE_MODELS` | مجموعة بالنماذج الكبيرة | النماذج التي تحتاج تحديد حدود ذاكرة وتفريغ CPU |
+
+#### النماذج الأربعة المستخدمة
+
+| النموذج | المعرف (Repo ID) | الحجم (4-bit) | الاستراتيجية | رابط Hugging Face |
+|---------|------------------|---------------|-------------|------------------|
+| **Gemma-4 E2B** | `google/gemma-4-e2b-it` | ~1.5GB | GPU فقط | https://huggingface.co/google/gemma-4-e2b-it |
+| **Gemma-4 E4B** | `google/gemma-4-e4b-it` | ~3GB | GPU فقط | https://huggingface.co/google/gemma-4-e4b-it |
+| **Gemma-4 26B MoE** | `google/gemma-4-26b-a4b-it` | ~13.3GB | GPU + حد 14.5GB | https://huggingface.co/google/gemma-4-26b-a4b-it |
+| **Gemma-4 31B Dense** | `google/gemma-4-31b-it` | ~16.4GB | GPU 14.5GB + CPU Offload 16GB | https://huggingface.co/google/gemma-4-31b-it |
+
+#### الدوال الرئيسية
+
+**`get_local_model_path(repo_id)`:** تحول اسم النموذج (مثلاً `google/gemma-4-e2b-it`) إلى مساره المحلي الكامل في كاش Hugging Face (`~/.cache/huggingface/hub/models--google--gemma-4-e2b-it/snapshots/xxx`). هذا يمنع أي محاولة للاتصال بالإنترنت.
+
+**`generate_agent_response(...)`:** الدالة الأهم في المشروع كله. تمر بالمراحل التالية:
+
+```
+ المرحلة 1 → تفريغ الذاكرة (gc.collect + cuda.empty_cache)
+      │
+ المرحلة 2 → إعداد ضبط الضغط (BitsAndBytesConfig مع NF4 + Double Quant)
+      │
+ المرحلة 3 → تحميل الـ Tokenizer محلياً (local_files_only=True)
+      │
+ المرحلة 4 → تحميل النموذج محلياً مع device_map="auto"
+      │         ↳ إذا كان كبيراً: max_memory = {0: "14.5GiB", "cpu": "16GiB"}
+      │
+ المرحلة 5 → بناء المحادثة بصيغة chat_template
+      │
+ المرحلة 6 → Tokenization واختيار الجهاز (GPU أو model.device)
+      │
+ المرحلة 7 → بدء التوليد في خيط منفصل مع TextIteratorStreamer
+      │         ↳ do_sample=True, temperature=0.7, top_p=0.9
+      │
+ المرحلة 8 → بث كل توكن جديد عبر stream_callback
+      │
+ المرحلة 9 → [FINALLY] التفريغ النووي:
+              ↳ accelerate.release_memory(model)
+              ↳ del model, tokenizer, inputs
+              ↳ gc.collect()
+              ↳ torch.cuda.empty_cache()
+              ↳ torch.cuda.synchronize()
+```
+
+**`generate_ai_customization(...)`:** دالة مشابهة تستخدم نموذجاً كبيراً (الافتراضي 31B) لتوليد تخصيصات ذكية للوكلاء بناءً على وصف المستخدم. تُنتج نصاً منسقاً بصيغة `===AGENT_X===...===END===` يتم تحليله لاحقاً في الواجهة.
+
+---
+
+### 4.4 📄 `backend/orchestrator.py` — المنسق المركزي
+
+**الوظيفة:** يدير حياة الجلسات، ترتيب تنفيذ الوكلاء، وحفظ/تحميل الإعدادات.
+
+#### المكونات الأساسية
+
+| المكون | النوع | الوظيفة |
+|--------|-------|---------|
+| `DEFAULT_AGENTS_CONFIG` | قائمة قواميس | التخصيص الافتراضي لكل وكيل (الاسم، الدور، النموذج، التفعيل) |
+| `AGENTS_CONFIG` | متغير عالمي | التخصيص النشط حالياً (يُحمّل من JSON أو الافتراضي) |
+| `active_sessions_control` | قاموس | حالة كل جلسة: `running` / `paused` / `stopped` |
+| `active_sessions_interventions` | قاموس | قائمة أوامر المستخدم الحية التي تنتظر الحقن |
+| `MAX_HISTORY_MESSAGES` | ثابت = 10 | حد اقتطاع سجل المحادثة لتفادي تجاوز Context Window |
+
+#### الدالة الأهم: `run_swarm_session()`
+
+هذه الدالة هي "قلب المنسق". تعمل في **حلقة while لا نهائية**:
+
+```python
+while active_sessions_control.get(session_id) not in ["stopped", "finished"]:
+    for agent in AGENTS_CONFIG:
+        # 1. فحص التفعيل
+        # 2. فحص الإيقاف المؤقت (while paused: sleep)
+        # 3. فحص التدخلات الإدارية (Manager Intervention)
+        # 4. اقتطاع السجل (Context Truncation)
+        # 5. تشغيل الوكيل عبر ai_engine.generate_agent_response()
+        # 6. حفظ في SQLite
+        # 7. تحديث البرومبت للوكيل التالي
+    cycle_number += 1
+    time.sleep(2)  # استراحة قصيرة بين الدورات
+```
+
+#### نظام الملفات (Persistence)
+
+| الملف | الوظيفة |
+|-------|---------|
+| `config/current_config.json` | حفظ التخصيصات الحالية للوكلاء |
+| `config/settings.json` | إعدادات عامة (مثل نموذج التخصيص المختار) |
+| `config/templates.json` | قوالب يمكن للمستخدم حفظها وإعادة تحميلها |
+
+---
+
+### 4.5 📄 `backend/database.py` — طبقة البيانات
+
+**التقنية:** SQLite3 — قاعدة بيانات ملفية مدمجة لا تحتاج خادماً.
+
+**رابط SQLite:** https://www.sqlite.org/
+
+#### الجداول الثلاثة
+
+| الجدول | الأعمدة | الوظيفة |
+|--------|---------|---------|
+| `sessions` | `id`, `topic`, `status`, `created_at` | تسجيل جلسات العصف الذهني |
+| `messages` | `id`, `session_id`, `agent_id`, `role`, `content`, `timestamp` | حفظ كل رسالة ومن أي وكيل أتت |
+| `drafts` | `session_id`, `content`, `updated_at` | المسودة الحية التي يكتبها الوكيل الأخير (#5) |
+
+**ملاحظة تقنية مهمة:** يستخدم `ON CONFLICT ... DO UPDATE` وهو بناء جملة SQLite يُسمى **UPSERT** — إذا كانت المسودة موجودة يتم تحديثها، وإلا يتم إنشاؤها. هذا يمنع التكرار.
+
+---
+
+### 4.6 📄 `gui/main_window.py` — النافذة الرئيسية
+
+**هذا هو أكبر ملف في المشروع (513 سطراً).** يحتوي على كل ما يراه المستخدم.
+
+#### الكلاسات
+
+**1. `AgentCard(QFrame)`** — بطاقة الوكيل
+
+كل وكيل يظهر في اللوحة اليمنى كبطاقة تحتوي:
+- اسم الوكيل مع رقمه
+- المعرف التقني الكامل للنموذج (مثلاً `google/gemma-4-31b-it`)
+- حالة الوكيل (جاهز 💤 / يفكر 🧠)
+- زر ON/OFF للتفعيل/التعطيل
+- زر "التفاصيل" لعرض المواصفات التقنية
+
+خصائص متقدمة:
+- **`update_card(data)`:** تحديث البطاقة فوراً من إشارة Live Preview.
+- **`setOpacity(opacity)`:** تعتيم البطاقة عند تعطيل الوكيل باستخدام `QGraphicsOpacityEffect`.
+- **Signals:** `details_requested` و `toggle_requested` لإرسال إشارات للنافذة الأم.
+
+**2. `MainWindow(QMainWindow)`** — النافذة الرئيسية
+
+مقسمة إلى 4 مناطق:
+
+```
+┌──────────────────────────────────────────────────────┐
+│           شريط التنقل العلوي (Navbar)                │
+│  🛡️التشخيص │ 📁النماذج │ 📥تصدير │ 🔄جديد │ 🛑إيقاف │ ⏸مؤقت │ 🚀بدء │
+├──────────┬─────────────────────────┬─────────────────┤
+│ اللوحة   │   مجلس الاستشاريين     │ المسودة الحية   │
+│ اليمنى   │   (Chat - QTextBrowser) │ (Draft)         │
+│ الفريق   │                         │                 │
+│ والخبراء │   [محادثة الوكلاء]      │ [مسودة المشروع] │
+│          │                         │                 │
+│ 🎛️تخصيص │   ┌─────────────────┐   │                 │
+│ بطاقة #1 │   │ اكتب فكرتك ➔   │   │                 │
+│ بطاقة #2 │   └─────────────────┘   │                 │
+│ بطاقة #3 │                         │                 │
+│ بطاقة #4 │                         │                 │
+│ بطاقة #5 │                         │                 │
+└──────────┴─────────────────────────┴─────────────────┘
+```
+
+#### الدوال المهمة
+
+| الدالة | الوظيفة |
+|--------|---------|
+| `init_ui()` | بناء كامل الواجهة: Navbar, Splitter, Panels, Chat, Input |
+| `setup_agent_cards()` | قراءة الإعدادات وإنشاء بطاقات الوكلاء الخمسة |
+| `refresh_agent_cards()` | مسح البطاقات القديمة وإعادة بنائها (بعد حفظ التخصيص) |
+| `on_send_clicked()` | معالجة ضغط الإرسال: بدء جلسة جديدة أو حقن تدخل إداري |
+| `start_swarm_with_topic(topic)` | إنشاء `SwarmWorker` وربط إشاراته وبدء الخيط |
+| `on_token_received(agent_id, token, done)` | عرض التوكنات في الدردشة فوراً حرفاً حرفاً |
+| `show_customization_dialog()` | فتح نافذة التخصيص مع ربط Live Sync |
+| `update_card_preview(agent_id, data)` | استقبال إشارة Live Preview وتحديث البطاقة |
+| `make_selectable(widget)` | جعل كل النصوص في الواجهة قابلة للتحديد والنسخ |
+| `update_draft_display()` | مؤقت يحدث المسودة كل 3 ثوانٍ من SQLite |
+
+---
+
+### 4.7 📄 `gui/ai_worker.py` — خيوط العمل الخلفية
+
+يحتوي على كلاسين:
+
+**1. `SwarmWorker(QThread)`** — خيط العصف الذهني
+
+يعمل في خيط منفصل عن الواجهة لمنع التجميد. يُرسل 4 إشارات:
+
+| الإشارة | المعاملات | الوظيفة |
+|---------|------------|---------|
+| `log_signal` | `str` | رسائل السجل |
+| `status_signal` | `int, str` | تحديث حالة الوكيل (thinking/idle) |
+| `token_signal` | `int, str, bool` | بث التوكنات حرفاً حرفاً |
+| `info_signal` | `str` | رسائل معلوماتية |
+
+**`stream_callback(data)`** هي الجسر: تستقبل بيانات من `orchestrator` → وترسلها كإشارات للواجهة.
+
+**2. `CustomizationWorker(QThread)`** — خيط التخصيص بالذكاء الاصطناعي
+
+يُشغّل `generate_ai_customization()` في الخلفية ويُرسل النتيجة أو الخطأ عبر Signals.
+
+---
+
+### 4.8 📄 `gui/customization_dialog.py` — نافذة التخصيص المتقدمة
+
+**أعقد نافذة حوار في المشروع (361 سطراً).** مقسمة إلى:
+
+| المنطقة | المحتوى |
+|---------|---------|
+| **الشريط الجانبي (280px)** | القوالب المحفوظة + تصدير/استيراد + إغلاق |
+| **اللوحة الرئيسية** | التخصيص بالذكاء الاصطناعي + محرر الوكلاء الخمسة |
+
+#### التخصيص بالذكاء الاصطناعي
+
+المستخدم يكتب وصفاً مثل "أريد فريقاً متخصصاً في الأمن السيبراني" → يضغط "بدء تخصيص الكل" → يستدعي النظام نموذج 31B → يولّد أسماء وأدوار مخصصة → يتم تحليل النتيجة (Regex Parsing) → تملأ الحقول تلقائياً.
+
+#### Live Sync / التحديث اللحظي
+
+كل حقل إدخال متصل بإشارة `live_change`:
+```python
+name_edit.textChanged → emit_live_update(agent_id)
+model_select.currentIndexChanged → emit_live_update(agent_id)
+enabled_check.stateChanged → emit_live_update(agent_id)
+```
+
+`emit_live_update()` تجمع البيانات وترسلها → `MainWindow.update_card_preview()` تحدث البطاقة فوراً.
+
+---
+
+### 4.9 📄 `gui/components.py` — المكونات المخصصة
+
+يحتوي على `AutoExpandingTextEdit(QTextEdit)`:
+
+- مربع نص **يتمدد تلقائياً** مع المحتوى (من `min_height` إلى `max_height`)
+- يخفي شريط التمرير العمودي حتى يتجاوز المحتوى الحد الأقصى
+- يدعم `Enter` للإرسال (في الدردشة) و`Shift+Enter` لسطر جديد
+
+---
+
+### 4.10 📄 `gui/app_style.py` — نظام التنسيق (QSS)
+
+**QSS** = Qt Style Sheets — مشابه لـ CSS في الويب، لكن لتطبيقات Qt المكتبية.
+
+**نمط التصميم:** مستوحى من **WhatsApp Dark Mode**:
+
+| العنصر | اللون | كود Hex |
+|--------|-------|---------|
+| الخلفية الرئيسية | أسود مخضر داكن | `#0b141a` |
+| خلفية البطاقات | رمادي داكن | `#111b21` |
+| الحدود | رمادي متوسط | `#202c33` |
+| اللون الأخضر الرئيسي (WhatsApp Green) | أخضر | `#00a884` |
+| النص العادي | أبيض فاتح | `#e9edef` |
+| النص الثانوي | رمادي فاتح | `#8696a0` |
+| زر البدء | أخضر | `#00a884` |
+| زر الإيقاف | أحمر | `#ef4444` |
+| زر الإيقاف المؤقت | أصفر | `#eab308` |
+| زر التشخيص | وردي | `#ec4899` |
+
+---
+
+### 4.11 📄 `gui/models_data.py` — البيانات التقنية للنماذج
+
+قاموس يحتوي على **صفحة HTML غنية** لكل نموذج تعرض: المعرف، المعلمات، حجم السياق، حجم VRAM، الاستخدام الأمثل.
+
+---
+
+### 4.12 📄 `gui/details_dialog.py` — نافذة التفاصيل
+
+نافذة حوار بسيطة تعرض محتوى HTML غني عن نموذج معين. قابلة للتكبير والتصغير.
+
+---
+
+### 4.13 📄 `gui/diagnosis_dialog.py` — نافذة التشخيص
+
+نافذة "Terminal داخلي" تعرض سجلات Python الحية (logging) بلون أخضر على خلفية سوداء (نمط Matrix). تحتوي زر نسخ لإرسال السجلات للمبرمج.
+
+**الآلية:** `DiagnosisHandler` يرث `logging.Handler` → يلتقط كل رسالة سجل → يرسلها كإشارة → النافذة تعرضها.
+
+---
+
+## 5. التقنيات والمكتبات المستخدمة بالتفصيل
+
+### 5.1 اللغة الأساسية
+
+| التقنية | الإصدار | الرابط | الاستخدام |
+|---------|---------|--------|-----------|
+| **Python** | 3.13 | https://www.python.org/ | لغة البرمجة الأساسية للمشروع بأكمله |
+
+### 5.2 واجهة المستخدم الرسومية
+
+| المكتبة | الرابط | الاستخدام |
+|---------|--------|-----------|
+| **PySide6** (Qt 6 لـ Python) | https://doc.qt.io/qtforpython-6/ | بناء واجهة سطح المكتب الأصلية بالكامل (النوافذ، الأزرار، القوائم، الأنماط) |
+
+**لماذا PySide6 وليس Tkinter أو PyQt؟**
+- PySide6 هو الربط الرسمي من شركة Qt (تملكه The Qt Company).
+- ترخيص LGPL مفتوح (بعكس PyQt الذي يحتاج ترخيصاً تجارياً).
+- أداء أعلى وتوافق أفضل مع Windows, macOS, Linux.
+
+**المفاهيم المستخدمة من PySide6:**
+
+| المفهوم | الشرح |
+|---------|-------|
+| `QMainWindow` | النافذة الرئيسية مع شريط أدوات وشريط حالة |
+| `QDialog` | نافذة حوار منبثقة (Modal أو Non-Modal) |
+| `QSplitter` | تقسيم أفقي/عمودي قابل للسحب بين اللوحات |
+| `QTextBrowser` | عارض HTML للقراءة فقط (لعرض الدردشة والمسودة) |
+| `QTextEdit` | محرر نصوص قابل للكتابة |
+| `QComboBox` | قائمة منسدلة لاختيار النموذج |
+| `QCheckBox` | مربع تحديد لتفعيل/تعطيل الوكيل |
+| `QScrollArea` | منطقة قابلة للتمرير لقوائم طويلة |
+| `QThread` | خيط عمل منفصل لمنع تجميد الواجهة |
+| `Signal / Slot` | نظام اتصال آمن بين الخيوط |
+| `QTimer` | مؤقت دوري (يحدث المسودة كل 3 ثوان) |
+| `QGraphicsOpacityEffect` | تأثير شفافية بصري |
+| `QSS (Qt Style Sheets)` | نظام تنسيق مشابه لـ CSS |
+
+### 5.3 محركات الذكاء الاصطناعي
+
+| المكتبة | الرابط | الاستخدام |
+|---------|--------|-----------|
+| **Hugging Face Transformers** | https://huggingface.co/docs/transformers | تحميل النماذج (`AutoModelForCausalLM`) والمحولات (`AutoTokenizer`) والبث (`TextIteratorStreamer`) |
+| **PyTorch (torch)** | https://pytorch.org/ | محرك الحساب التنسوري (Tensor Computation) لتشغيل النماذج على GPU |
+| **BitsAndBytes** | https://github.com/bitsandbytes-foundation/bitsandbytes | ضغط 4-bit NF4 للنماذج الكبيرة |
+| **Accelerate** | https://huggingface.co/docs/accelerate | إدارة `device_map="auto"` وتقسيم النموذج بين GPU/CPU و`release_memory()` |
+| **Hugging Face Hub** | https://huggingface.co/docs/huggingface_hub | إدارة الكاش المحلي للنماذج |
+
+### 5.4 قاعدة البيانات
+
+| التقنية | الرابط | الاستخدام |
+|---------|--------|-----------|
+| **SQLite3** | https://www.sqlite.org/ (مدمج في Python) | حفظ الجلسات، الرسائل، والمسودات محلياً |
+
+### 5.5 أدوات البنية التحتية
+
+| الأداة | الرابط | الاستخدام |
+|--------|--------|-----------|
+| **PowerShell 7+** | https://learn.microsoft.com/en-us/powershell/ | سكربتات التشغيل والإصلاح |
+| **venv (Python)** | https://docs.python.org/3/library/venv.html | البيئة الافتراضية |
+| **pip** | https://pip.pypa.io/ | مدير الحزم |
+| **ctypes** | مدمج في Python | التواصل مع Windows API |
+| **CUDA** | https://developer.nvidia.com/cuda-toolkit | تسريع GPU من NVIDIA |
+| **cuDNN** | https://developer.nvidia.com/cudnn | مكتبة الشبكات العصبية العميقة لـ NVIDIA |
+
+---
+
+## 6. آلية العمل الداخلية خطوة بخطوة
+
+### المسار الكامل من "ضغط الإرسال" حتى "ظهور الاستجابة"
+
+```
+1. المستخدم يكتب "حلل لي فكرة تطبيق لتوصيل الطعام بالدرونز"
+   ↓
+2. MainWindow.on_send_clicked()
+   → يأخذ النص من AutoExpandingTextEdit
+   → يمسح الحقل
+   ↓
+3. MainWindow.start_swarm_with_topic(topic)
+   → يعرض "🚀 بدء العصف الذهني" في الدردشة
+   → ينشئ SwarmWorker(topic) — كائن QThread
+   → يربط الإشارات: token_signal → on_token_received
+   → يبدأ الخيط: worker.start()
+   ↓
+4. SwarmWorker.run() [في خيط منفصل]
+   → ينشئ session_id فريد (UUID4)
+   → يحفظ الجلسة في SQLite
+   → يستدعي orchestrator.run_swarm_session()
+   ↓
+5. Orchestrator: الحلقة اللانهائية
+   → الدورة #1:
+      → الوكيل #1 (المهندس المعماري):
+         5a. يفحص إذا مفعل → نعم
+         5b. يفحص إذا متوقف مؤقتاً → لا
+         5c. يفحص تدخلات المستخدم → لا يوجد
+         5d. يقتطع السجل (آخر 10 رسائل)
+         5e. يستدعي ai_engine.generate_agent_response(
+               agent_id=1,
+               model_tag="google/gemma-4-e2b-it",
+               agent_role="مهندس معماري...",
+               conversation_history=[],
+               new_prompt="الفكرة الرئيسية...",
+               stream_callback=worker.stream_callback
+             )
+   ↓
+6. AI Engine: generate_agent_response()
+   6a. gc.collect() + cuda.empty_cache()  ← تنظيف
+   6b. BitsAndBytesConfig(4-bit NF4)     ← إعداد الضغط
+   6c. AutoTokenizer.from_pretrained()   ← تحميل المحوّل
+   6d. AutoModelForCausalLM.from_pretrained() ← تحميل النموذج
+   6e. apply_chat_template()             ← بناء المحادثة
+   6f. tokenizer() → inputs             ← ترميز النص
+   6g. TextIteratorStreamer()            ← إعداد البث
+   6h. Thread(model.generate).start()   ← بدء التوليد
+   ↓
+7. البث (Streaming Loop):
+   for token in streamer:
+       → stream_callback({"type": "stream", "agent_id": 1, "token": token})
+       → SwarmWorker.stream_callback()
+       → SwarmWorker.token_signal.emit(1, token, False)
+       → MainWindow.on_token_received(1, token, False)
+       → chat_box.insertPlainText(token)  ← يظهر حرفاً حرفاً!
+   ↓
+8. انتهاء التوليد:
+   → token_signal.emit(1, "", True)  ← done=True
+   → finally: تفريغ النموذج من الذاكرة
+   ↓
+9. العودة للـ Orchestrator → الوكيل #2 → ... → الوكيل #5
+   ↓
+10. الوكيل #5 (الكاتب التقني):
+    → يُحفظ ناتجه كمسودة في SQLite: update_draft()
+    → المؤقت في MainWindow يُحدّث لوحة المسودة كل 3 ثوانٍ
+   ↓
+11. العودة لبداية الحلقة → الدورة #2 → ... → ∞
+```
+
+---
+
+## 7. نظام الذاكرة وإدارة VRAM
+
+### فلسفة "حمّل، ولّد، فرّغ" (Load-Generate-Purge)
+
+بما أن كرت الشاشة RTX 4090 Laptop يملك **16GB VRAM فقط**، وأكبر نموذج (31B Dense) يحتاج **~16.4GB بعد الضغط**، فلا يمكن تحميل أكثر من نموذج واحد في الوقت نفسه.
+
+#### استراتيجية التحميل حسب حجم النموذج
+
+| النموذج | الحجم 4-bit | الاستراتيجية |
+|---------|------------|-------------|
+| E2B (2.6B) | ~1.5GB | يحمل بالكامل على GPU — لا يحتاج أي تقسيم |
+| E4B (4.4B) | ~3GB | يحمل بالكامل على GPU |
+| 26B MoE | ~13.3GB | يحمل على GPU مع حد `max_memory = {0: "14.5GiB"}` |
+| 31B Dense | ~16.4GB | يتجاوز 16GB → يحمل 14.5GB على GPU + الباقي (~2GB) على CPU RAM |
+
+#### التفريغ النووي (Nuclear Purge Pattern)
+
+```python
+# 1. تحرير عمق عبر Accelerate
+from accelerate.utils import release_memory
+model = release_memory(model)  # يمشي على كل الطبقات ويحذفها
+
+# 2. حذف الكائنات
+del model
+del tokenizer
+del inputs
+
+# 3. التنظيف العميق
+gc.collect()                    # جامع القمامة في Python
+torch.cuda.empty_cache()        # تفريغ كاش CUDA
+torch.cuda.synchronize()        # انتظار اكتمال كل عمليات GPU
+```
+
+---
+
+## 8. نظام الواجهة الرسومية
+
+### المبادئ التصميمية
+
+1. **RTL-First:** الواجهة مصممة من اليمين لليسار (`setLayoutDirection(Qt.RightToLeft)`) لدعم العربية أصلاً.
+2. **WhatsApp Dark Theme:** ألوان مستوحاة من واجهة WhatsApp المظلمة للراحة البصرية.
+3. **Non-Blocking UI:** كل العمليات الثقيلة تعمل في `QThread` منفصل.
+4. **Live Streaming:** التوكنات تظهر حرفاً حرفاً في الوقت الفعلي.
+5. **Global Selectability:** كل نص في الواجهة قابل للتحديد والنسخ عبر `make_selectable()`.
+6. **Live Sync / التحديث اللحظي:** أي تعديل في نافذة التخصيص ينعكس فوراً على البطاقات الخلفية.
+
+### المؤقتات (Timers)
+
+| المؤقت | التردد | الوظيفة |
+|--------|--------|---------|
+| `draft_timer` | كل 3000ms | تحديث لوحة المسودة من SQLite |
+
+---
+
+## 9. نظام التخصيص والتحكم
+
+### 3 مستويات من التخصيص
+
+| المستوى | الطريقة | الشرح |
+|---------|---------|-------|
+| **يدوي** | المستخدم يكتب الاسم والدور ويختار النموذج | تحكم مطلق |
+| **ذكي** | المستخدم يصف الفريق ← النموذج 31B يولّد الأدوار | تخصيص ذكي تلقائي |
+| **قوالب** | المستخدم يحفظ إعداداته كقالب ويعيد تحميله لاحقاً | إعادة استخدام سريعة |
+
+### التدخل الإداري (Manager Intervention)
+
+أثناء عمل الوكلاء في الحلقة اللانهائية، يستطيع المستخدم كتابة رسالة جديدة. هذه الرسالة لا تبدأ جلسة جديدة، بل تُحقن كـ **"أمر عاجل من المدير"** في الـ prompt التالي:
+
+```python
+current_prompt += f"\n\n[أمر وتوجيه عاجل من المدير - المستخدم البشري]: '{user_msg}'"
+```
+
+---
+
+## 10. البرومبت الهندسي المتقدم لإعادة البناء
+
+> [!IMPORTANT]
+> **هذا البرومبت مصمم وفق أعلى معايير Prompt Engineering ليكون شاملاً ودقيقاً بما يكفي لنموذج ذكاء اصطناعي آخر لإعادة بناء المشروع بالكامل من الصفر.**
+
+---
+
+```
+# MASTER PROMPT — بناء نظام Agentic Swarm كامل من الصفر
+
+## هويتك
+أنت مهندس برمجيات خبير متخصص في بناء تطبيقات سطح المكتب بـ Python وأنظمة الذكاء الاصطناعي المحلية. ستقوم ببناء مشروع كامل يُسمى "Agentic Swarm" (العقل الجماعي).
+
+## ملخص المشروع
+بناء تطبيق سطح مكتب أصلي (Native Desktop App) بلغة Python يُدير فريقاً من 5 وكلاء ذكاء اصطناعي يعملون تعاونياً في حلقة لا نهائية للعصف الذهني وتطوير الأفكار. كل وكيل يستخدم نموذج LLM محلي من عائلة Google Gemma-4. التطبيق يعمل بالكامل بدون إنترنت (Offline-First) على جهاز يملك RTX 4090 (16GB VRAM) و32GB RAM.
+
+## المتطلبات التقنية الصارمة
+
+### بنية المشروع (Architecture)
+أنشئ المشروع بالهيكل التالي بالضبط:
+```
+project/
+├── desktop_app.py          # نقطة الدخول الرئيسية
+├── run_project.ps1         # سكربت PowerShell للتشغيل التلقائي
+├── requirements.txt        # المكتبات: PySide6, transformers, torch, accelerate, bitsandbytes
+├── backend/
+│   ├── ai_engine.py        # محرك تحميل/توليد/تفريغ النماذج
+│   ├── orchestrator.py     # المنسق المركزي للوكلاء
+│   └── database.py         # SQLite للجلسات والرسائل والمسودات
+├── gui/
+│   ├── main_window.py      # النافذة الرئيسية (3 لوحات + Navbar)
+│   ├── customization_dialog.py  # نافذة تخصيص الوكلاء (يدوي + ذكي + قوالب)
+│   ├── diagnosis_dialog.py # عارض سجلات حي (Live Logs)
+│   ├── details_dialog.py   # عارض تفاصيل تقنية للنموذج
+│   ├── components.py       # AutoExpandingTextEdit المخصص
+│   ├── app_style.py        # QSS أنماط WhatsApp Dark
+│   ├── ai_worker.py        # QThread للعمل الخلفي
+│   └── models_data.py      # بيانات HTML للنماذج
+└── config/
+    ├── current_config.json  # إعدادات الوكلاء الحالية
+    ├── settings.json        # إعدادات عامة
+    └── templates.json       # قوالب محفوظة
+```
+
+### 1. desktop_app.py — نقطة الدخول
+- استخدم `ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID()` لتعريف هوية التطبيق على Windows.
+- استدعِ `init_db()` قبل أي شيء لتهيئة SQLite.
+- أنشئ `QApplication` مع خط `Segoe UI` بحجم 10.
+- أنشئ `MainWindow()` واعرضها.
+- استخدم `sys.exit(app.exec())` لبدء حلقة الأحداث.
+
+### 2. backend/ai_engine.py — المحرك الذكي
+- عرّف قائمة `AVAILABLE_MODELS` بأربعة نماذج Google Gemma-4:
+  - `google/gemma-4-e2b-it` (2.6B params, ~1.5GB 4-bit)
+  - `google/gemma-4-e4b-it` (4.4B params, ~3GB 4-bit)
+  - `google/gemma-4-26b-a4b-it` (26B MoE, ~13.3GB 4-bit)
+  - `google/gemma-4-31b-it` (31B Dense, ~16.4GB 4-bit)
+- عرّف مجموعة `LARGE_MODELS` للنماذج التي تحتاج `max_memory`.
+- دالة `get_local_model_path(repo_id)`: تحول اسم النموذج إلى مساره في كاش HuggingFace المحلي (`~/.cache/huggingface/hub/models--ORG--NAME/snapshots/HASH`).
+- دالة `generate_agent_response(agent_id, model_tag, agent_role, conversation_history, new_prompt, stream_callback)`:
+  - نظّف الذاكرة أولاً: `gc.collect()` + `torch.cuda.empty_cache()`.
+  - أعدّ `BitsAndBytesConfig` مع: `load_in_4bit=True`, `bnb_4bit_compute_dtype=torch.bfloat16`, `bnb_4bit_use_double_quant=True`, `bnb_4bit_quant_type="nf4"`.
+  - حمّل Tokenizer و Model محلياً (`local_files_only=True`) مع `device_map="auto"`.
+  - للنماذج الكبيرة: `max_memory = {0: "14.5GiB", "cpu": "16GiB"}` + `offload_folder="offload_dir"`.
+  - ابنِ المحادثة: system_instruction + conversation_history + new_prompt.
+  - استخدم `tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)`.
+  - أنشئ `TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)`.
+  - شغّل `model.generate()` في `Thread` منفصل مع: `max_new_tokens=400/600`, `do_sample=True`, `temperature=0.7`, `top_p=0.9`.
+  - ابث كل توكن عبر `stream_callback({"type": "stream", "agent_id": X, "token": T, "done": False/True})`.
+  - في `finally`: نفّذ التفريغ النووي: `accelerate.utils.release_memory(model)` → `del model, tokenizer, inputs` → `gc.collect()` → `torch.cuda.empty_cache()` → `torch.cuda.synchronize()`.
+- دالة `generate_ai_customization(user_prompt, agent_ids, model_tag)`: تولّد تخصيصات ذكية بصيغة `===AGENT_X===...===END===`.
+
+### 3. backend/orchestrator.py — المنسق
+- عرّف `DEFAULT_AGENTS_CONFIG`: قائمة بـ 5 قواميس (id, role, name, enabled, model_tag).
+- حمّل الإعدادات من `config/current_config.json` أو الافتراضي.
+- دالة `run_swarm_session(session_id, topic, stream_callback)`:
+  - حلقة `while` لا نهائية تتوقف فقط عند `stopped` أو `finished`.
+  - لكل وكيل مفعّل: فحص الإيقاف المؤقت → فحص التدخلات → اقتطاع السجل (آخر 10 رسائل) → تشغيل `generate_agent_response()` → حفظ في SQLite.
+  - الوكيل الأخير (#5) يحفظ ناتجه كمسودة.
+  - `time.sleep(2)` بين الدورات.
+- دوال CRUD: `get_agents_config()`, `update_agents_config()`, `reset_agents_config()`, `save_active_config()`.
+- نظام القوالب: `get_templates()`, `save_template()`, `delete_template()`.
+- نظام الإعدادات: `get_settings()`, `save_settings()`.
+- `active_sessions_control = {}` لحالة الجلسة (running/paused/stopped).
+- `active_sessions_interventions = {}` لأوامر المستخدم الحية.
+
+### 4. backend/database.py — SQLite
+- ثلاثة جداول: `sessions` (id, topic, status), `messages` (session_id, agent_id, role, content), `drafts` (session_id, content).
+- دوال: `init_db()`, `save_message()`, `create_session()`, `update_session_status()`, `update_draft()` (UPSERT), `get_draft()`, `get_all_messages()`.
+
+### 5. gui/main_window.py — النافذة الرئيسية
+- كلاس `AgentCard(QFrame)`: بطاقة لكل وكيل مع: عنوان، معرف النموذج التقني، حالة (thinking/idle)، زر ON/OFF، زر تفاصيل. إشارات: `details_requested(int, str)`, `toggle_requested(int, bool)`. دالة `update_card(data)` لـ Live Preview.
+- كلاس `MainWindow(QMainWindow)`:
+  - الواجهة: Navbar علوي + QSplitter ثلاثي (لوحة الوكلاء يمين 20% | دردشة وسط 55% | مسودة يسار 25%).
+  - شريط التنقل: أزرار (تشخيص، نماذج، تصدير، إعادة تشغيل، إيقاف كلي، إيقاف مؤقت، بدء، متابعة تلقائية).
+  - منطقة الإدخال: `AutoExpandingTextEdit` + زر إرسال.
+  - `make_selectable(widget)`: دالة عودية (Recursive) تجعل كل `QLabel` و `QTextBrowser` و `QTextEdit` قابلاً للتحديد.
+  - `show_customization_dialog()`: فتح نافذة التخصيص مع ربط `live_change` → `update_card_preview()`.
+  - `on_token_received(agent_id, token, done)`: إدراج التوكنات حرفاً حرفاً.
+  - `QTimer` كل 3000ms لتحديث المسودة.
+  - `closeEvent()`: إيقاف الخيط عند الإغلاق.
+
+### 6. gui/customization_dialog.py — نافذة التخصيص
+- شريط جانبي (280px): قوالب + تصدير/استيراد.
+- لوحة رئيسية: قسم تخصيص بالذكاء الاصطناعي (AutoExpandingTextEdit + QComboBox لاختيار نموذج التخصيص + زر تشغيل) + 5 مربعات تحرير (لكل وكيل: اسم + دور + نموذج + تفعيل).
+- إشارة `live_change(int, dict)`: كل تغيير في أي حقل يرسل إشارة فورية للنافذة الأم.
+- `apply_and_save()`: يجمع البيانات ← يحفظ في JSON ← يحدث الـ Orchestrator ← يغلق بقبول.
+- `run_ai_customization()`: يشغل `CustomizationWorker` ← يتلقى النتيجة ← يحللها بـ Regex ← يملأ الحقول.
+
+### 7. gui/components.py — AutoExpandingTextEdit
+- يرث من `QTextEdit`.
+- يتمدد تلقائياً (من `min_height` إلى `max_height`).
+- يخفي شريط التمرير حتى يتجاوز المحتوى الحد الأقصى.
+- يدعم Enter للإرسال (يبحث عن `on_send_clicked()` في النافذة الأم).
+
+### 8. gui/app_style.py — QSS
+- نمط WhatsApp Dark Mode.
+- ألوان: خلفية `#0b141a`, بطاقات `#111b21`, حدود `#202c33`, أخضر رئيسي `#00a884`, نص `#e9edef`.
+- أزرار دائرية ملونة: بدء أخضر، إيقاف أحمر، مؤقت أصفر، تشخيص وردي.
+- مربعات إدخال بحدود خضراء عند التركيز.
+- شريط تمرير رفيع أنيق (8px).
+
+### 9. gui/ai_worker.py — خيوط العمل
+- `SwarmWorker(QThread)`: يشغل `run_swarm_session()` في خيط منفصل. إشارات: `log_signal(str)`, `status_signal(int, str)`, `token_signal(int, str, bool)`, `info_signal(str)`. دوال تحكم: `pause_session()`, `resume_session()`, `stop_session()`.
+- `CustomizationWorker(QThread)`: يشغل `generate_ai_customization()`. إشارات: `finished(str)`, `error(str)`.
+
+### 10. gui/models_data.py — بيانات النماذج
+- قاموس `MODELS_INFO` يحتوي HTML غني لكل نموذج (المعرف، المعلمات، السياق، الحجم، الاستخدام الأمثل).
+
+### 11. gui/diagnosis_dialog.py — التشخيص
+- `LogSignal(QObject)`: جسر إشارات للسجلات.
+- `DiagnosisHandler(logging.Handler)`: يلتقط رسائل logging ويرسلها كإشارة.
+- `DiagnosisDialog(QDialog)`: عارض سجلات بلون أخضر على أسود (Matrix style) مع أزرار نسخ ومسح.
+
+### 12. gui/details_dialog.py — التفاصيل
+- `DetailsDialog(QDialog)`: نافذة بسيطة تعرض HTML في `QTextBrowser`. قابلة للتكبير والتصغير.
+
+## متطلبات التصميم
+- الواجهة بالكامل RTL (من اليمين لليسار) لدعم العربية.
+- خط `Segoe UI` الافتراضي.
+- كل النصوص قابلة للتحديد والنسخ بالماوس.
+- مربعات الإدخال قابلة للكتابة اليدوية الكاملة.
+- كل تغيير في نافذة التخصيص ينعكس فوراً (Live Sync) على البطاقات الرئيسية.
+- عرض المعرف التقني الكامل للنموذج (مثلاً `google/gemma-4-31b-it`) وليس اسماً ودياً.
+- عدم تجميد الواجهة أبداً أثناء العمل الثقيل.
+- بث التوكنات حرفاً حرفاً في الدردشة.
+
+## متطلبات حرجة
+- كل نموذج يُحمّل ← يُولّد ← يُفرّغ بالكامل من الذاكرة قبل النموذج التالي.
+- استخدام `local_files_only=True` دائماً لمنع أي اتصال بالإنترنت.
+- استخدام `BitsAndBytesConfig` مع NF4 + Double Quantization لكل نموذج.
+- النماذج الكبيرة (26B, 31B) تستخدم `max_memory` لتقسيم الأوزان بين GPU وCPU.
+- عند إغلاق التطبيق: إيقاف جميع الخيوط العاملة.
+- `finally` block إجباري لتفريغ الذاكرة حتى في حالة الخطأ.
+
+## اللغة
+- كل نصوص الواجهة باللغة العربية.
+- التعليقات في الكود بالعربية.
+- الأسماء التقنية (أسماء المتغيرات والدوال) بالإنجليزية.
+
+ابدأ بإنشاء كل الملفات بالترتيب: requirements.txt → database.py → ai_engine.py → orchestrator.py → components.py → app_style.py → models_data.py → details_dialog.py → diagnosis_dialog.py → ai_worker.py → customization_dialog.py → main_window.py → desktop_app.py → run_project.ps1.
+```
+
+---
+
+> [!TIP]
+> **نصيحة للاستخدام:** انسخ البرومبت أعلاه (من `# MASTER PROMPT` حتى نهاية الكود) وألصقه كاملاً لنموذج الذكاء الاصطناعي الآخر. البرومبت مصمم ليكون مكتفياً ذاتياً (Self-Contained) — يحتوي كل المعلومات اللازمة لبناء المشروع من الصفر بدون أي مرجع خارجي.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

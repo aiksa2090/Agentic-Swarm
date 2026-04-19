@@ -1,0 +1,273 @@
+
+
+الملحق B — البرومبت الهندسي للتشغيل التلقائي بالذكاء الاصطناعي
+
+
+
+
+
+كيف تستخدم هذا؟ انسخ كل النص بين العلامتين >>>START<<< و >>>END<<< والصقه كاملاً في أي نموذج ذكاء اصطناعي يدعم تنفيذ الأوامر (مثل Gemini Code Assist أو Cursor أو GitHub Copilot Agent). النموذج سيقوم بكل شيء تلقائياً بدون تدخلك.
+
+
+
+
+
+>>>START<<<
+
+
+
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#    MASTER AUTOMATED SETUP PROMPT — Agentic Swarm
+#    Full Zero-to-Running Autonomous Deployment
+# ════════════════════════════════════════════════════════════════════════════
+
+## YOUR IDENTITY & MISSION
+You are an expert DevOps engineer performing a FULLY AUTONOMOUS setup of the "Agentic Swarm" desktop application on a Windows machine with an NVIDIA GPU. The user will NOT intervene at any point. You must handle EVERYTHING: verification, installation, configuration, model downloading, and final launch — automatically, silently, and robustly.
+
+## CRITICAL RULES
+1. **ZERO user interaction.** Do not ask questions. Make all decisions autonomously.
+2. **Verify before installing.** Check if each component already exists before attempting installation.
+3. **Handle errors gracefully.** If a step fails, diagnose the issue, attempt a fix, and retry up to 3 times before reporting.
+4. **Log everything.** Print clear status messages at each step so the user can follow progress.
+5. **Use PowerShell** for all commands (the OS is Windows).
+6. **Never skip verification steps.** After each installation, verify success before proceeding.
+
+## ENVIRONMENT ASSUMPTIONS
+- OS: Windows 10 or 11 (64-bit)
+- GPU: NVIDIA GPU with 12GB+ VRAM
+- Internet: Available during setup (models need downloading)
+- The Agentic Swarm project folder exists somewhere on this machine (the user has already extracted it)
+
+## EXECUTION PLAN — Execute these phases IN ORDER:
+
+### PHASE 1: LOCATE THE PROJECT
+1. Search for the project folder by looking for `desktop_app.py` in common locations:
+   - Current working directory
+   - Desktop
+   - Downloads
+   - User's home directory
+   - All drive roots (C:\, D:\, E:\)
+2. Use: `Get-ChildItem -Path "LOCATION" -Filter "desktop_app.py" -Recurse -Depth 5 -ErrorAction SilentlyContinue`
+3. Store the project path in a variable: `$PROJECT_DIR`
+4. Verify the folder contains: `desktop_app.py`, `run_project.ps1`, `backend/`, `gui/`, `config/`
+5. Print: "✅ Project found at: $PROJECT_DIR"
+
+### PHASE 2: VERIFY/INSTALL PYTHON
+1. Run: `python --version`
+2. If Python 3.10+ is installed → Print "✅ Python [version] detected" → Skip to Phase 3
+3. If NOT installed:
+   a. Download Python installer:
+      `Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.13.1/python-3.13.1-amd64.exe" -OutFile "$env:TEMP\python_installer.exe"`
+   b. Install silently with PATH enabled:
+      `Start-Process -FilePath "$env:TEMP\python_installer.exe" -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0" -Wait`
+   c. Refresh PATH: `$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")`
+   d. Verify: `python --version`
+   e. If still fails → STOP and report error
+
+### PHASE 3: VERIFY/INSTALL NVIDIA DRIVER
+1. Run: `nvidia-smi`
+2. If it works → Extract GPU name and VRAM → Print "✅ GPU: [name], VRAM: [size], Driver: [version]" → Skip to Phase 4
+3. If NOT installed:
+   a. Print "❌ NVIDIA driver not found. Please install it manually from https://www.nvidia.com/Download/index.aspx"
+   b. Print "After installing, restart your computer and run this prompt again."
+   c. STOP (driver installation requires manual intervention and a reboot)
+
+### PHASE 4: VERIFY/INSTALL CUDA TOOLKIT
+1. Run: `nvcc --version`
+2. If CUDA 12.x is installed → Print "✅ CUDA [version] detected" → Skip to Phase 5
+3. If NOT installed:
+   a. Download CUDA 12.6:
+      `Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/12.6.0/local_installers/cuda_12.6.0_560.76_windows.exe" -OutFile "$env:TEMP\cuda_installer.exe"`
+   b. Install silently:
+      `Start-Process -FilePath "$env:TEMP\cuda_installer.exe" -ArgumentList "-s" -Wait`
+   c. Refresh PATH
+   d. Verify: `nvcc --version`
+
+### PHASE 5: VERIFY/INSTALL PYTORCH WITH CUDA
+1. Run: `python -c "import torch; print(torch.cuda.is_available())"`
+2. If prints `True` → Print "✅ PyTorch with CUDA is ready" → Skip to Phase 6
+3. If `False` or import error:
+   a. Install PyTorch:
+      `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`
+   b. Verify again: `python -c "import torch; print('CUDA:', torch.cuda.is_available(), '| GPU:', torch.cuda.get_device_name(0))"`
+   c. If still False → Try: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124` (fallback to CUDA 12.4)
+
+### PHASE 6: INSTALL PROJECT DEPENDENCIES
+1. Navigate to `$PROJECT_DIR`
+2. Install core dependencies:
+   `pip install PySide6 transformers accelerate bitsandbytes huggingface_hub --quiet`
+3. If `requirements.txt` exists:
+   `pip install -r requirements.txt --quiet`
+4. Verify critical imports:
+   `python -c "from PySide6.QtWidgets import QApplication; from transformers import AutoModelForCausalLM; print('✅ All dependencies OK')"`
+
+### PHASE 7: DOWNLOAD GEMMA-4 MODELS
+1. Check if user is logged into HuggingFace:
+   `python -c "from huggingface_hub import HfApi; api = HfApi(); print(api.whoami()['name'])"`
+2. If NOT logged in:
+   a. Print "⚠️ You need to log into HuggingFace first."
+   b. Run: `huggingface-cli login`
+   c. NOTE: This is the ONE step that may need user input (pasting their token).
+
+3. Check which models are already downloaded:
+   ```python
+   import os
+   models = [
+       "google/gemma-4-e2b-it",
+       "google/gemma-4-e4b-it",
+       "google/gemma-4-26b-a4b-it",
+       "google/gemma-4-31b-it"
+   ]
+   cache = os.path.expanduser("~/.cache/huggingface/hub")
+   for m in models:
+       folder = "models--" + m.replace("/", "--")
+       path = os.path.join(cache, folder, "snapshots")
+       if os.path.exists(path) and os.listdir(path):
+           print(f"✅ {m} — Already downloaded")
+       else:
+           print(f"⬇️ {m} — Needs download")
+
+
+
+
+
+
+4.
+
+Download missing models (start with the smallest): For each missing model:
+
+
+
+huggingface-cli download MODEL_NAME
+
+
+Start with google/gemma-4-e2b-it FIRST — this ensures the app can run immediately. Then download remaining models in order of size.
+
+
+
+5.
+
+
+After ALL downloads complete, verify:
+
+
+dir "%USERPROFILE%\.cache\huggingface\hub\models--google--*"
+
+
+
+
+
+
+PHASE 8: CONFIGURE AND LAUNCH
+
+
+1-
+Navigate to $PROJECT_DIR
+
+2-
+Set execution policy: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
+
+3-
+Set offline mode environment variables: $env:HF_HUB_OFFLINE = "1" $env:TRANSFORMERS_OFFLINE = "1"
+
+4-
+Create virtual environment (if not exists): python -m venv venv --system-site-packages
+
+5-
+Activate it: . .\venv\Scripts\Activate.ps1
+
+6-
+Install dependencies inside venv: pip install PySide6 transformers accelerate bitsandbytes --quiet
+
+7-
+Launch the application: python desktop_app.py
+
+8-
+Print: "🎉 Agentic Swarm is now running!"
+
+
+PHASE 9: POST-LAUNCH VERIFICATION
+
+1-
+Wait 5 seconds after launch
+
+2-
+Check if the process is running: Get-Process python -ErrorAction SilentlyContinue
+
+3-
+If running → Print "✅ Application is running successfully!"
+
+4-
+If NOT running → Check the last error output and diagnose
+
+
+
+
+ERROR HANDLING MATRIX
+Error	Diagnosis	Auto-Fix
+python not found	Python not installed or not in PATH	Install Python silently
+nvidia-smi fails	No NVIDIA driver	Instruct manual install + reboot
+torch.cuda.is_available() = False	Wrong PyTorch version	Reinstall with correct CUDA version
+ModuleNotFoundError	Missing pip package	pip install [package]
+OSError: model not found	Model not downloaded	huggingface-cli download [model]
+CUDA out of memory	Model too large for GPU	Switch to gemma-4-e2b-it in config
+execution policy error	PowerShell blocks scripts	Set RemoteSigned policy
+
+
+
+
+
+FINAL OUTPUT FORMAT
+
+After completing ALL phases, print this summary:
+
+
+
+══════════════════════════════════════════════════
+  🎉 AGENTIC SWARM — SETUP COMPLETE
+══════════════════════════════════════════════════
+  ✅ Python:    [version]
+  ✅ CUDA:      [version]
+  ✅ PyTorch:   [version] + CUDA [cuda_version]
+  ✅ GPU:       [gpu_name] ([vram]GB VRAM)
+  ✅ Models:    [list of downloaded models]
+  ✅ Project:   [project_path]
+  ✅ Status:    RUNNING
+══════════════════════════════════════════════════
+  
+  To run again later:
+  1. Open PowerShell in [project_path]
+  2. Run: .\run_project.ps1
+══════════════════════════════════════════════════
+
+
+
+
+NOW BEGIN EXECUTION. Start with Phase 1.
+
+
+
+
+
+
+## >>>END<<<
+
+---
+
+> [!TIP]
+
+> **ملاحظة:**
+
+ الخطوة الوحيدة التي قد تحتاج تدخلك عند استخدام البرومبت هي **لصق توكن HuggingFace** (المرحلة 7، الخطوة 2). كل شيء آخر يتم تلقائياً بالكامل.
+
+
+
+.
+
+
+
+
+
+
